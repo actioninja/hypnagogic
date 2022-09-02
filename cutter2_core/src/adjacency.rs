@@ -1,4 +1,4 @@
-use crate::corners::{Corner, CornerType};
+use crate::corners::{Corner, CornerType, Side};
 use bitflags::bitflags;
 use serde::{Deserialize, Serialize};
 
@@ -19,50 +19,67 @@ bitflags! {
     }
 }
 
+impl From<Corner> for Adjacency {
+    fn from(corner: Corner) -> Self {
+        Adjacency::from_corner(corner)
+    }
+}
+
+impl From<Side> for Adjacency {
+    fn from(side: Side) -> Self {
+        match side {
+            Side::North => Adjacency::N,
+            Side::South => Adjacency::S,
+            Side::East => Adjacency::E,
+            Side::West => Adjacency::W,
+        }
+    }
+}
+
 impl Adjacency {
     /// Returns an array of the cardinal directions in the order used by DMI
     pub const fn dmi_cardinals() -> [Adjacency; 4] {
         [Adjacency::S, Adjacency::N, Adjacency::E, Adjacency::W]
     }
 
-    pub const fn corner_sides(corner: &Corner) -> [Adjacency; 2] {
+    pub const fn corner_sides(&self) -> (Adjacency, Adjacency) {
+        match *self {
+            Adjacency::NE => (Adjacency::N, Adjacency::E),
+            Adjacency::SE => (Adjacency::S, Adjacency::E),
+            Adjacency::SW => (Adjacency::S, Adjacency::W),
+            Adjacency::NW => (Adjacency::N, Adjacency::W),
+            _ => panic!("Not a corner!"),
+        }
+    }
+
+    // implemented as const for usage in get corner type
+    const fn from_corner(corner: Corner) -> Self {
         match corner {
-            Corner::NorthEast => [Adjacency::N, Adjacency::E],
-            Corner::SouthEast => [Adjacency::S, Adjacency::E],
-            Corner::SouthWest => [Adjacency::S, Adjacency::W],
-            Corner::NorthWest => [Adjacency::N, Adjacency::W],
+            Corner::NorthEast => Adjacency::NE,
+            Corner::SouthEast => Adjacency::SE,
+            Corner::SouthWest => Adjacency::SW,
+            Corner::NorthWest => Adjacency::NW,
         }
     }
 
     pub const fn get_corner_type(&self, corner: Corner) -> CornerType {
-        //I can see a pattern here but extracting the functionality seemed less readable
-        match corner {
-            Corner::NorthEast => {
-                // It should only flat smooth if cardinals are filled too
-                if self.contains(Self::N) && self.contains(Self::E) {
-                    if self.contains(Self::NE) {
-                        CornerType::Flat
-                    } else {
-                        CornerType::Concave
-                    }
-                // Since we don't have
-                } else if self.contains(Self::N) {
-                    CornerType::Horizontal
-                } else if self.contains(Self::E) {
-                    CornerType::Vertical
-                } else {
-                    CornerType::Convex
-                }
+        let adj_corner: Adjacency = Adjacency::from_corner(corner);
+        let (vertical, horizontal) = adj_corner.corner_sides();
+        // It should only flat smooth if cardinals are filled too
+        if self.contains(vertical) && self.contains(horizontal) {
+            if self.contains(adj_corner) {
+                CornerType::Flat
+            } else {
+                CornerType::Concave
             }
-            Corner::SouthEast => {
-                todo!()
-            }
-            Corner::SouthWest => {
-                todo!()
-            }
-            Corner::NorthWest => {
-                todo!()
-            }
+        } else if self.contains(vertical) {
+            // Since we don't have both, it must be exclusive meaning horizontal doesn't need to be checked
+            CornerType::Vertical
+        } else if self.contains(horizontal) {
+            // Ditto as above, but now for horizontal
+            CornerType::Horizontal
+        } else {
+            CornerType::Convex
         }
     }
 }
