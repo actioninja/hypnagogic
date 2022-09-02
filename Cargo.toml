@@ -1,0 +1,5 @@
+[workspace]
+members = [
+    "cutter2_cli",
+    "cutter2_core"
+]

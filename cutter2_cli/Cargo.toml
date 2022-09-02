@@ -1,0 +1,20 @@
+[package]
+name = "cutter2-cli"
+description = "CLI Tool for cutting icons in to the DMI format"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0"
+clap = { version = "3.1", features=["color", "suggestions", "deprecated", "derive", "wrap_help"] }
+dmi = "0.1"
+dont_disappear = "3.0"
+image = "0.24"
+serde = "1.0"
+serde_yaml = "0.9"
+serde_with = "2.0"
+walkdir = "2.3"
+cutter2-core = { path = "../cutter2_core" }
