@@ -5,6 +5,7 @@ use crate::util::deep_merge_yaml;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use serde_yaml::{Mapping, Value};
+use std::io::{Read, Seek};
 use template_resolver::TemplateResolver;
 use tracing::debug;
 
@@ -22,11 +23,28 @@ impl<T> CornersData<T> {}
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Config {
+    pub file_prefix: Option<String>,
     pub mode: CutterMode,
+}
+
+impl Config {
+    /// Load a config from a reader and provide a collapsed, template resolved back.
+    /// # Errors
+    /// Returns an error if serde fails to load from the reader
+    pub fn load<R: Read + Seek>(input: &mut R, resolver: impl TemplateResolver) -> Result<Self> {
+        let config = serde_yaml::from_reader(input)?;
+
+        let result_value = resolve_templates(config, resolver)?;
+
+        let out_config: Self = serde_yaml::from_value(result_value)?;
+        Ok(out_config)
+    }
 }
 
 #[derive(Clone, Default, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct TemplatedConfig {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
     pub template: Option<String>,
     pub map: Mapping,
 }
