@@ -1,8 +1,8 @@
+use clap::Parser;
 use std::fs;
 use std::fs::metadata;
 use std::io::{self};
 use std::path::{Path, PathBuf};
-use clap::Parser;
 use walkdir::{DirEntry, WalkDir};
 
 #[derive(Parser, Debug)]
@@ -27,12 +27,19 @@ struct Args {
 
 fn main() -> io::Result<()> {
     let args = Args::parse();
-    let Args { verbose, flatten, debug, output, input } = args;
+    let Args {
+        verbose,
+        flatten,
+        debug,
+        output,
+        input,
+    } = args;
 
     let files_to_process: Vec<PathBuf> = if metadata(&input)?.is_file() {
         vec![Path::new(&input).to_path_buf()]
     } else {
-        WalkDir::new(&input).into_iter()
+        WalkDir::new(&input)
+            .into_iter()
             .filter_map(Result::ok)
             .filter(|e| e.file_type().is_file())
             .filter(|e| {

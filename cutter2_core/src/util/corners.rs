@@ -26,7 +26,7 @@ pub enum Corner {
 }
 
 impl Corner {
-    pub const fn sides_of_corner(&self) -> (Side, Side) {
+    pub const fn sides_of_corner(self) -> (Side, Side) {
         match self {
             Corner::NorthEast => (Side::East, Side::North),
             Corner::SouthEast => (Side::East, Side::South),

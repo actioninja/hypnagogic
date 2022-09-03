@@ -1,8 +1,12 @@
-use std::collections::HashMap;
+pub mod template_resolver;
+
+use crate::modes::CutterMode;
+use crate::util::deep_merge_yaml;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
+use serde_yaml::{Mapping, Value};
+use template_resolver::TemplateResolver;
 use tracing::debug;
-use crate::modes::{CutterMode};
 
 pub const LATEST_VERSION: &str = "1";
 
@@ -14,31 +18,21 @@ pub struct CornersData<T> {
     pub southwest: T,
 }
 
-impl<T> CornersData<T> {
-
-}
-
-#[derive(Copy, Clone, Default, PartialEq, Eq, Debug, Serialize, Deserialize)]
-pub struct Sides {
-    pub west: u32,
-    pub east: u32,
-    pub north: u32,
-    pub south: u32,
-}
+impl<T> CornersData<T> {}
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Config {
-    mode: CutterMode,
+    pub mode: CutterMode,
 }
 
-#[derive(Clone, Default, PartialEq, Eq, Debug)]
+#[derive(Clone, Default, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct TemplatedConfig {
     pub template: Option<String>,
-    pub map: HashMap<String, serde_yaml::Value>,
+    pub map: Mapping,
 }
 
 #[tracing::instrument(skip(resolver))]
-pub fn resolve_templates(first: TemplatedConfig, resolver: impl TemplateResolver) -> Result<HashMap<String, serde_yaml::Value>> {
+pub fn resolve_templates(first: TemplatedConfig, resolver: impl TemplateResolver) -> Result<Value> {
     let mut current = first;
     let mut stack: Vec<TemplatedConfig> = vec![];
     //push the first on to the stack to be resolved
@@ -52,71 +46,133 @@ pub fn resolve_templates(first: TemplatedConfig, resolver: impl TemplateResolver
     }
     debug!("Found {} templates in chain", stack.len());
     //merge stack in to one hashmap
-    let mut out = HashMap::new();
+    let mut out: Value = Mapping::new().into();
     for conf in stack.iter().rev() {
         debug!(collapsing = ?conf, "Collapsing value");
-        for (k, v) in &conf.map {
-            out.insert(k.clone(), v.clone());
-        }
+        let conf_value: Value = conf.map.clone().into();
+        deep_merge_yaml(&mut out, conf_value);
     }
     Ok(out)
 }
 
-pub trait TemplateResolver {
-    fn resolve(&self, input: &str) -> Result<TemplatedConfig>;
-}
-
 #[cfg(test)]
 mod test {
-    use serde_yaml::Value;
     use super::*;
+    use serde_yaml::{Mapping, Value};
 
     struct TestResolver;
 
     impl TemplateResolver for TestResolver {
         fn resolve(&self, input: &str) -> Result<TemplatedConfig> {
-            let mut map1 = HashMap::new();
-            map1.insert("second".to_string(), 2.into());
-            map1.insert("third".to_string(), 2.into());
+            let mut map1 = Mapping::new();
+            map1.insert("second".into(), 2.into());
+            map1.insert("third".into(), 2.into());
             let first = TemplatedConfig {
                 template: Some("second".to_string()),
                 map: map1,
             };
 
-            let mut map2 = HashMap::new();
-            map2.insert("first".to_string(), 3.into());
-            map2.insert("second".to_string(), 3.into());
-            map2.insert("third".to_string(), 3.into());
-            map2.insert("fourth".to_string(), 3.into());
+            let mut map2 = Mapping::new();
+            map2.insert("first".into(), 3.into());
+            map2.insert("second".into(), 3.into());
+            map2.insert("third".into(), 3.into());
+            map2.insert("fourth".into(), 3.into());
             let second = TemplatedConfig {
                 template: None,
                 map: map2,
             };
 
+            let mut map4 = Mapping::new();
+            map4.insert("first".into(), 4.into());
+            map4.insert("second".into(), 4.into());
+            map4.insert("third".into(), 4.into());
+            let mut inner_map4 = Mapping::new();
+            inner_map4.insert("inner1".into(), 4.into());
+            inner_map4.insert("inner2".into(), 4.into());
+            map4.insert("inner".into(), inner_map4.into());
+            let fourth = TemplatedConfig {
+                template: Some("fifth".to_string()),
+                map: map4,
+            };
+
+            let mut map5 = Mapping::new();
+            map5.insert("first".into(), 5.into());
+            map5.insert("second".into(), 5.into());
+            map5.insert("third".into(), 5.into());
+            let mut inner_map5 = Mapping::new();
+            inner_map5.insert("inner1".into(), 5.into());
+            inner_map5.insert("inner2".into(), 5.into());
+            inner_map5.insert("inner3".into(), 5.into());
+            map5.insert("inner".into(), inner_map5.into());
+            let fifth = TemplatedConfig {
+                template: None,
+                map: map5,
+            };
+
             match input {
                 "first" => Ok(first),
                 "second" => Ok(second),
+                "fourth" => Ok(fourth),
+                "fifth" => Ok(fifth),
                 _ => panic!("Malformed test"),
             }
         }
     }
 
-    #[test]
-    fn test_flattening() {
-        let mut map = HashMap::new();
-        map.insert("first".to_string(), 1.into());
-        map.insert("second".to_string(), 1.into());
-        let test_template = TemplatedConfig {
-            template: Some("first".to_string()),
-            map,
-        };
+    mod config_templates {
+        use super::*;
+        use crate::config::{resolve_templates, TemplatedConfig};
+        use serde_yaml::{Mapping, Value};
 
-        let result = resolve_templates(test_template, TestResolver {}).unwrap();
-        let mut expected: HashMap<String, Value> = HashMap::new();
-        expected.insert("first".to_string(), 1.into());
-        expected.insert("second".to_string(), 1.into());
-        expected.insert("third".to_string(), 2.into());
-        expected.insert("fourth".to_string(), 3.into());
-        assert_eq!(result, expected);
+        #[test]
+        fn flattening_simple() {
+            let mut map = Mapping::new();
+            map.insert("first".into(), 1.into());
+            map.insert("second".into(), 1.into());
+            let test_template = TemplatedConfig {
+                template: Some("first".to_string()),
+                map,
+            };
+
+            let result = resolve_templates(test_template, TestResolver {}).unwrap();
+            let mut expected = Mapping::new();
+            expected.insert("first".into(), 1.into());
+            expected.insert("second".into(), 1.into());
+            expected.insert("third".into(), 2.into());
+            expected.insert("fourth".into(), 3.into());
+            let value: Value = expected.into();
+            assert_eq!(result, value);
+        }
+
+        #[test]
+        fn flattening_complex() {
+            let mut map = Mapping::new();
+            map.insert("first".into(), 1.into());
+            map.insert("second".into(), 1.into());
+            let mut inner_map = Mapping::new();
+            inner_map.insert("inner1".into(), 1.into());
+
+            map.insert("inner".into(), inner_map.into());
+
+            let test_template = TemplatedConfig {
+                template: Some("fourth".to_string()),
+                map,
+            };
+
+            let result = resolve_templates(test_template, TestResolver {}).unwrap();
+
+            let mut expected = Mapping::new();
+            expected.insert("first".into(), 1.into());
+            expected.insert("second".into(), 1.into());
+            expected.insert("third".into(), 4.into());
+            let mut second_mapping = Mapping::new();
+            second_mapping.insert("inner1".into(), 1.into());
+            second_mapping.insert("inner2".into(), 4.into());
+            second_mapping.insert("inner3".into(), 5.into());
+            expected.insert("inner".into(), second_mapping.into());
+
+            let expected_value: Value = expected.into();
+            assert_eq!(result, expected_value);
+        }
     }
 }

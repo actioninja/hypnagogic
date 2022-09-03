@@ -1,0 +1,29 @@
+mode: !BitmaskSlice
+  icon_size_x: 32
+  icon_size_y: 32
+  output_icon_size_x: 32
+  output_icon_size_y: 32
+  positions:
+    convex: 0
+    concave: 1
+    horizontal: 2
+    vertical: 3
+  sides:
+    north:
+      start: 0
+      end: 16
+      output_start: 0
+    south:
+      start: 16
+      end: 32
+      output_start: 16
+    east:
+      start: 16
+      end: 32
+      output_start: 16
+    west:
+      start: 0
+      end: 0
+      output_start: 0
+  produce_dirs: false
+  is_diagonal: false

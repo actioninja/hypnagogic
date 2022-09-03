@@ -1,11 +1,11 @@
-use std::io::{BufRead, Seek};
-use enum_dispatch::enum_dispatch;
-use dmi::icon::Icon;
+use cutters::bitmask_slice::BitmaskSlice;
 use anyhow::Result;
-use crate::modes::bitmask_slice::BitmaskSlice;
+use dmi::icon::Icon;
+use enum_dispatch::enum_dispatch;
 use serde::{Deserialize, Serialize};
+use std::io::{BufRead, Seek};
 
-pub mod bitmask_slice;
+pub mod cutters;
 
 #[enum_dispatch]
 pub trait CutterModeConfig {
@@ -17,4 +17,3 @@ pub trait CutterModeConfig {
 pub enum CutterMode {
     BitmaskSlice,
 }
-

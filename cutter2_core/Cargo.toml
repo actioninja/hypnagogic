@@ -13,7 +13,7 @@ dmi = "0.1"
 dont_disappear = "3.0"
 enum_dispatch = "0.3"
 enum-iterator = "1.2"
-fixed-map = { version = "0.7", features = ["serde"]}
+fixed-map = { version = "0.7", features = ["serde"] }
 image = "0.24"
 serde = "1.0"
 serde_yaml = "0.9"

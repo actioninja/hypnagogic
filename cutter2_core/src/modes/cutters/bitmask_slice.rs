@@ -1,21 +1,78 @@
-use crate::adjacency::Adjacency;
+use crate::util::adjacency::Adjacency;
 use anyhow::Result;
 use dmi::icon::Icon;
 use enum_iterator::all;
 use fixed_map::Map;
 use image::{DynamicImage, GenericImageView, ImageFormat};
 use serde::{Deserialize, Serialize};
-use serde_with::with_prefix;
 use shrinkwraprs::Shrinkwrap;
 use std::collections::HashMap;
 use std::io::{BufRead, Read, Seek};
 
-use crate::config::Sides;
-use crate::corners::{Corner, CornerData, CornerType, Side};
+use crate::util::corners::{Corner, CornerData, CornerType, Side};
 use crate::modes::CutterModeConfig;
 
-#[derive(Clone, Default, PartialEq, Eq, Debug, Serialize, Deserialize, Shrinkwrap)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Shrinkwrap)]
+#[serde(transparent)]
 pub struct CornerConfig(Map<CornerType, u32>);
+
+impl Default for CornerConfig {
+    fn default() -> Self {
+        let mut out = Map::new();
+
+        out.insert(CornerType::Convex, 0);
+        out.insert(CornerType::Concave, 1);
+        out.insert(CornerType::Horizontal, 2);
+        out.insert(CornerType::Vertical, 3);
+
+        CornerConfig(out)
+    }
+}
+
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Shrinkwrap)]
+#[serde(transparent)]
+pub struct SideConfig(Map<Side, SideSpacing>);
+
+impl Default for SideConfig {
+    fn default() -> Self {
+        let mut out = Map::new();
+
+        out.insert(
+            Side::North,
+            SideSpacing {
+                start: 0,
+                end: 16,
+                output_start: 0,
+            },
+        );
+        out.insert(
+            Side::West,
+            SideSpacing {
+                start: 0,
+                end: 0,
+                output_start: 0,
+            },
+        );
+        out.insert(
+            Side::East,
+            SideSpacing {
+                start: 16,
+                end: 32,
+                output_start: 16,
+            },
+        );
+        out.insert(
+            Side::South,
+            SideSpacing {
+                start: 16,
+                end: 32,
+                output_start: 16,
+            },
+        );
+
+        SideConfig(out)
+    }
+}
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct SideSpacing {
@@ -24,8 +81,10 @@ pub struct SideSpacing {
     pub output_start: u32,
 }
 
-#[derive(Clone, Default, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct BitmaskSlice {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
     pub output_name: Option<String>,
 
     pub icon_size_x: u32,
@@ -36,18 +95,54 @@ pub struct BitmaskSlice {
 
     pub positions: CornerConfig,
 
-    pub sides: Map<Side, SideSpacing>,
+    pub sides: SideConfig,
 
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
     pub delay: Option<Vec<f32>>,
 
     pub produce_dirs: bool,
 
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
     pub prefabs: Option<HashMap<Adjacency, u32>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
     pub prefabs_overlays: Option<HashMap<Adjacency, Vec<u32>>>,
 
     pub is_diagonal: bool,
 
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
     pub dmi_version: Option<String>,
+}
+
+impl Default for BitmaskSlice {
+    fn default() -> Self {
+        BitmaskSlice {
+            output_name: None,
+            icon_size_x: 32,
+            icon_size_y: 32,
+
+            output_icon_size_x: 32,
+            output_icon_size_y: 32,
+
+            positions: CornerConfig::default(),
+
+            sides: SideConfig::default(),
+
+            delay: None,
+
+            produce_dirs: false,
+
+            prefabs: None,
+            prefabs_overlays: None,
+
+            is_diagonal: false,
+
+            dmi_version: None,
+        }
+    }
 }
 
 impl CutterModeConfig for BitmaskSlice {
@@ -71,6 +166,11 @@ impl BitmaskSlice {
         side_info.end - side_info.start
     }
 
+    /// Generates corners
+    /// # Errors
+    /// Errors on malformed image
+    /// # Panics
+    /// Shouldn't panic
     pub fn generate_corners<R: BufRead + Seek>(&self, input: &mut R) -> Result<(Corners, Prefabs)> {
         let img = image::load(input, ImageFormat::Png)?;
 

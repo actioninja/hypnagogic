@@ -1,21 +1,11 @@
-pub mod modes;
+#![warn(clippy::pedantic, clippy::cargo)]
+// Due to the high amount of byte conversions, sometimes intentional lossy conversions are necessary.
+#![allow(clippy::cast_possible_truncation)]
+// Default::default() is more idiomatic imo
+#![allow(clippy::default_trait_access)]
+// too many lines is a dumb metric
+#![allow(clippy::too_many_lines)]
+
 pub mod config;
-mod corners;
-mod adjacency;
-
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
-
-
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
+pub mod modes;
+pub mod util;

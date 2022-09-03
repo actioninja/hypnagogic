@@ -1,4 +1,4 @@
-use crate::corners::{Corner, CornerType, Side};
+use crate::util::corners::{Corner, CornerType, Side};
 use bitflags::bitflags;
 use serde::{Deserialize, Serialize};
 
@@ -42,8 +42,8 @@ impl Adjacency {
         [Adjacency::S, Adjacency::N, Adjacency::E, Adjacency::W]
     }
 
-    pub const fn corner_sides(&self) -> (Adjacency, Adjacency) {
-        match *self {
+    pub const fn corner_sides(self) -> (Adjacency, Adjacency) {
+        match self {
             Adjacency::NE => (Adjacency::N, Adjacency::E),
             Adjacency::SE => (Adjacency::S, Adjacency::E),
             Adjacency::SW => (Adjacency::S, Adjacency::W),
@@ -62,7 +62,7 @@ impl Adjacency {
         }
     }
 
-    pub const fn get_corner_type(&self, corner: Corner) -> CornerType {
+    pub const fn get_corner_type(self, corner: Corner) -> CornerType {
         let adj_corner: Adjacency = Adjacency::from_corner(corner);
         let (vertical, horizontal) = adj_corner.corner_sides();
         // It should only flat smooth if cardinals are filled too
