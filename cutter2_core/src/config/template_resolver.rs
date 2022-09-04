@@ -26,12 +26,18 @@ pub struct FileResolver {
 }
 
 impl FileResolver {
-    /// Creates a new FileResolver with the given path
+    /// Creates a new `FileResolver` with the given path
     /// # Errors
     /// Returns an error if `path` does not exist.
     pub fn new(path: &Path) -> anyhow::Result<Self> {
         let pathbuf = fs::canonicalize(path)?;
         Ok(FileResolver { path: pathbuf })
+    }
+}
+
+impl Default for FileResolver {
+    fn default() -> Self {
+        FileResolver::new(Path::new("templates")).expect("templates folder does not exist")
     }
 }
 

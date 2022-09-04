@@ -1,16 +1,16 @@
 use crate::util::adjacency::Adjacency;
 use anyhow::Result;
-use dmi::icon::Icon;
+use dmi::icon::{Icon, IconState};
 use enum_iterator::all;
 use fixed_map::Map;
-use image::{DynamicImage, GenericImageView, ImageFormat};
+use image::{imageops, DynamicImage, GenericImageView, ImageFormat};
 use serde::{Deserialize, Serialize};
 use shrinkwraprs::Shrinkwrap;
 use std::collections::HashMap;
 use std::io::{BufRead, Read, Seek};
 
-use crate::util::corners::{Corner, CornerData, CornerType, Side};
 use crate::modes::CutterModeConfig;
+use crate::util::corners::{Corner, CornerData, CornerType, Side};
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Shrinkwrap)]
 #[serde(transparent)]
@@ -147,8 +147,122 @@ impl Default for BitmaskSlice {
 
 impl CutterModeConfig for BitmaskSlice {
     fn perform_operation<R: BufRead + Seek>(&self, input: &mut R) -> Result<Vec<(String, Icon)>> {
-        let (corners, prefabs) = self.generate_corners(input)?;
-        todo!()
+        let mut img = image::load(input, ImageFormat::Png)?;
+        let (corners, prefabs) = self.generate_corners(&mut img)?;
+
+        let (_in_x, in_y) = img.dimensions();
+        let num_frames = in_y / self.icon_size_y;
+
+        let possible_states = if self.is_diagonal {
+            SIZE_OF_DIAGONALS
+        } else {
+            SIZE_OF_CARDINALS
+        };
+
+        let icon_directions = if self.produce_dirs {
+            Adjacency::dmi_cardinals().to_vec()
+        } else {
+            vec![Adjacency::S]
+        };
+
+        //First phase: generate icons
+        let west_output_start = self.sides.get(Side::West).unwrap().output_start as i64;
+        let south_output_start = self.sides.get(Side::South).unwrap().output_start as i64;
+        let mut assembled: HashMap<Adjacency, Vec<DynamicImage>> = HashMap::new();
+        for signature in 0..possible_states {
+            let adjacency = Adjacency::from_bits(signature as u8).unwrap();
+            let mut icon_state_images = vec![];
+            for frame in 0..num_frames {
+                if prefabs.contains_key(&adjacency) {
+                    let mut frame_image =
+                        DynamicImage::new_rgb8(self.output_icon_size_x, self.output_icon_size_y);
+                    imageops::replace(
+                        &mut frame_image,
+                        prefabs
+                            .get(&adjacency)
+                            .unwrap()
+                            .get(frame as usize)
+                            .unwrap(),
+                        west_output_start,
+                        south_output_start,
+                    );
+
+                    icon_state_images.push(frame_image);
+                } else {
+                    let mut frame_image =
+                        DynamicImage::new_rgb8(self.output_icon_size_x, self.output_icon_size_y);
+
+                    for corner in all::<Corner>() {
+                        let corner_type = adjacency.get_corner_type(corner);
+                        let corner_img = &corners
+                            .get(corner)
+                            .unwrap()
+                            .get(corner_type)
+                            .unwrap()
+                            .get(frame as usize)
+                            .unwrap();
+
+                        let (horizontal, vertical) = corner.sides_of_corner();
+
+                        let horizontal_start =
+                            self.sides.get(horizontal).unwrap().output_start as i64;
+                        let vertical_start = self.sides.get(vertical).unwrap().output_start as i64;
+                        imageops::overlay(
+                            &mut frame_image,
+                            *corner_img,
+                            horizontal_start,
+                            vertical_start,
+                        );
+                    }
+                    icon_state_images.push(frame_image);
+                }
+            }
+            assembled.insert(adjacency, icon_state_images);
+        }
+
+        // Second phase: map to byond icon states and produce dirs if need
+        // Even though this is the same loop as above, all states need to be generated first for the
+        // Rotation to work correctly, so it must be done as a second loop.
+        let mut icon_states = vec![];
+
+        // fairly gnarly iterator chain; loops delay sequence and then takes number of frames
+        let delay: Option<Vec<f32>> = self.delay.clone().map(|inner| {
+            inner
+                .iter()
+                .cycle()
+                .take(num_frames as usize)
+                .copied()
+                .collect()
+        });
+
+        for signature in 0..possible_states {
+            let mut icon_state_frames = vec![];
+
+            for icon_state_dir in &icon_directions {
+                let rotated_sig = icon_state_dir.rotate_to(*icon_state_dir);
+                icon_state_frames.extend(assembled[&rotated_sig].clone());
+            }
+
+            icon_states.push(IconState {
+                name: format!("{}", signature),
+                dirs: icon_directions.len() as u8,
+                frames: num_frames,
+                images: icon_state_frames,
+                delay: delay.clone(),
+                ..Default::default()
+            });
+        }
+
+        let output_icon = Icon {
+            version: Default::default(),
+            width: self.output_icon_size_x,
+            height: self.output_icon_size_y,
+            states: icon_states,
+        };
+
+        let output_name = format!("{}.dmi", "blah");
+
+        Ok(vec![(output_name, output_icon)])
     }
 }
 
@@ -171,9 +285,7 @@ impl BitmaskSlice {
     /// Errors on malformed image
     /// # Panics
     /// Shouldn't panic
-    pub fn generate_corners<R: BufRead + Seek>(&self, input: &mut R) -> Result<(Corners, Prefabs)> {
-        let img = image::load(input, ImageFormat::Png)?;
-
+    pub fn generate_corners(&self, img: &mut DynamicImage) -> Result<(Corners, Prefabs)> {
         let (_width, height) = img.dimensions();
 
         let num_frames = height / self.icon_size_y;

@@ -38,10 +38,12 @@ impl From<Side> for Adjacency {
 
 impl Adjacency {
     /// Returns an array of the cardinal directions in the order used by DMI
+    #[must_use]
     pub const fn dmi_cardinals() -> [Adjacency; 4] {
         [Adjacency::S, Adjacency::N, Adjacency::E, Adjacency::W]
     }
 
+    #[must_use]
     pub const fn corner_sides(self) -> (Adjacency, Adjacency) {
         match self {
             Adjacency::NE => (Adjacency::N, Adjacency::E),
@@ -62,6 +64,22 @@ impl Adjacency {
         }
     }
 
+    #[must_use]
+    pub fn set_flags_vec(self) -> Vec<Self> {
+        let full = [
+            Adjacency::N,
+            Adjacency::S,
+            Adjacency::E,
+            Adjacency::W,
+            Adjacency::NE,
+            Adjacency::SE,
+            Adjacency::SW,
+            Adjacency::NW,
+        ];
+        full.into_iter().filter(|a| self.contains(*a)).collect()
+    }
+
+    #[must_use]
     pub const fn get_corner_type(self, corner: Corner) -> CornerType {
         let adj_corner: Adjacency = Adjacency::from_corner(corner);
         let (vertical, horizontal) = adj_corner.corner_sides();
@@ -81,5 +99,72 @@ impl Adjacency {
         } else {
             CornerType::Convex
         }
+    }
+
+    #[must_use]
+    pub fn rotate_dir(self, direction: Self) -> Self {
+        match direction {
+            Adjacency::N => match self {
+                Adjacency::N => Adjacency::S,
+                Adjacency::S => Adjacency::N,
+                Adjacency::E => Adjacency::W,
+                Adjacency::W => Adjacency::E,
+                Adjacency::NE => Adjacency::SW,
+                Adjacency::SE => Adjacency::NW,
+                Adjacency::SW => Adjacency::NE,
+                Adjacency::NW => Adjacency::SE,
+                _ => unimplemented!("Only single allowed"),
+            },
+            Adjacency::S => self,
+            // Counter-clockwise 90 degrees
+            Adjacency::E => match self {
+                Adjacency::N => Adjacency::W,
+                Adjacency::S => Adjacency::E,
+                Adjacency::E => Adjacency::N,
+                Adjacency::W => Adjacency::S,
+                Adjacency::NE => Adjacency::NW,
+                Adjacency::SE => Adjacency::NE,
+                Adjacency::SW => Adjacency::SE,
+                Adjacency::NW => Adjacency::SW,
+                _ => unimplemented!("Only single allowed"),
+            },
+            Adjacency::W => match self {
+                Adjacency::N => Adjacency::E,
+                Adjacency::S => Adjacency::W,
+                Adjacency::E => Adjacency::S,
+                Adjacency::W => Adjacency::N,
+                Adjacency::NE => Adjacency::SE,
+                Adjacency::SE => Adjacency::SW,
+                Adjacency::SW => Adjacency::NW,
+                Adjacency::NW => Adjacency::NE,
+                _ => unimplemented!("Only single allowed"),
+            },
+            _ => unimplemented!("Rotating to diagonals doesn't make sense"),
+        }
+    }
+
+    #[must_use]
+    pub fn rotate_to(self, direction: Self) -> Self {
+        self.set_flags_vec()
+            .into_iter()
+            .map(|x| x.rotate_dir(direction))
+            .reduce(|accum, item| accum | item)
+            .expect("Empty Adjacency attempted to be rotated")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn set_flags_vec_test() {
+        let adj = Adjacency::N | Adjacency::S | Adjacency::W;
+
+        let result = adj.set_flags_vec();
+
+        let expected = vec![Adjacency::N, Adjacency::W, Adjacency::S];
+
+        assert!(expected.iter().all(|item| result.contains(item)));
     }
 }
