@@ -1,7 +1,11 @@
+use anyhow::Result;
 use clap::Parser;
+use cutter2_core::config::template_resolver::FileResolver;
+use cutter2_core::config::Config;
+use cutter2_core::modes::CutterModeConfig;
 use std::fs;
-use std::fs::metadata;
-use std::io::{self};
+use std::fs::{metadata, File};
+use std::io::{self, BufReader};
 use std::path::{Path, PathBuf};
 use walkdir::{DirEntry, WalkDir};
 
@@ -25,7 +29,7 @@ struct Args {
     input: String,
 }
 
-fn main() -> io::Result<()> {
+fn main() -> Result<()> {
     let args = Args::parse();
     let Args {
         verbose,
@@ -55,6 +59,24 @@ fn main() -> io::Result<()> {
 
     for path in files_to_process {
         println!("Pathbuf: {:?}", path);
+        let in_file_yaml = File::open(path.as_path())?;
+        let mut in_yaml_reader = BufReader::new(in_file_yaml);
+        let config = Config::load(
+            &mut in_yaml_reader,
+            FileResolver::new(Path::new("templates"))?,
+        )?;
+        let mut in_img_path = path.clone();
+        in_img_path.set_extension("png");
+        let in_img_file = File::open(in_img_path.as_path())?;
+        let mut in_img_reader = BufReader::new(in_img_file);
+
+        let out = config.mode.perform_operation(&mut in_img_reader)?;
+
+        for (name_hint, icon) in out {
+            let output_path = Path::new(name_hint.as_str());
+            let mut file = File::create(output_path)?;
+            icon.save(&mut file)?;
+        }
     }
 
     let output_path = Path::new(&output);

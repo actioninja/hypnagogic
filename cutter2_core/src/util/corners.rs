@@ -26,6 +26,7 @@ pub enum Corner {
 }
 
 impl Corner {
+    #[must_use]
     pub const fn sides_of_corner(self) -> (Side, Side) {
         match self {
             Corner::NorthEast => (Side::East, Side::North),
@@ -47,6 +48,7 @@ impl<T> Default for CornerData<T> {
 }
 
 impl<T> CornerData<T> {
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
@@ -63,6 +65,7 @@ pub enum CornerType {
 }
 
 impl CornerType {
+    #[must_use]
     pub fn cardinal() -> Vec<Self> {
         vec![
             Self::Convex,
@@ -72,6 +75,7 @@ impl CornerType {
         ]
     }
 
+    #[must_use]
     pub fn diagonal() -> Vec<Self> {
         vec![
             Self::Convex,
