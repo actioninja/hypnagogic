@@ -12,19 +12,19 @@ mode: !BitmaskSlice
   sides:
     north:
       start: 0
-      end: 16
+      end: 5
       output_start: 0
     south:
-      start: 16
+      start: 5
       end: 32
-      output_start: 16
+      output_start: 5
     east:
       start: 16
       end: 32
       output_start: 16
     west:
       start: 0
-      end: 0
+      end: 16
       output_start: 0
   produce_dirs: false
   is_diagonal: false

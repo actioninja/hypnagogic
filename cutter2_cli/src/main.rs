@@ -3,6 +3,7 @@ use clap::Parser;
 use cutter2_core::config::template_resolver::FileResolver;
 use cutter2_core::config::Config;
 use cutter2_core::modes::CutterModeConfig;
+use image::DynamicImage;
 use std::fs;
 use std::fs::{metadata, File};
 use std::io::{self, BufReader};
@@ -76,9 +77,16 @@ fn main() -> Result<()> {
         let mut in_img_path = path.clone();
         in_img_path.set_extension("png");
         let in_img_file = File::open(in_img_path.as_path())?;
-        let mut in_img_reader = BufReader::new(in_img_file);
+        let mut in_img_reader = BufReader::new(in_img_file.try_clone()?);
 
         let out = config.mode.perform_operation(&mut in_img_reader)?;
+
+        if debug {
+            let in_img_file = File::open(in_img_path.as_path())?;
+            let mut debug_reader = BufReader::new(in_img_file);
+            let debug_out: DynamicImage = config.mode.debug_output(&mut debug_reader)?;
+            debug_out.save("junk/penis.png")?
+        }
 
         for (name_hint, icon) in out {
             let output_path = Path::new(name_hint.as_str());

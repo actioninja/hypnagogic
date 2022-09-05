@@ -149,7 +149,7 @@ impl Adjacency {
             .into_iter()
             .map(|x| x.rotate_dir(direction))
             .reduce(|accum, item| accum | item)
-            .expect("Empty Adjacency attempted to be rotated")
+            .unwrap_or(self)
     }
 }
 
