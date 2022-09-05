@@ -40,16 +40,9 @@ impl Config {
         let result_value = resolve_templates(config, resolver)?;
 
         let out_config: Self = serde_yaml::from_value(result_value)?;
+        debug!(config = ?out_config, "Deserialized");
         Ok(out_config)
     }
-}
-
-#[derive(Clone, Default, PartialEq, Eq, Debug, Serialize, Deserialize)]
-pub struct TemplatedConfig {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(default)]
-    pub template: Option<String>,
-    pub map: Mapping,
 }
 
 /// Seeks out template string from a value and returns it as a Some(String)
@@ -75,10 +68,12 @@ fn extract_template_string(value: &mut Value) -> Option<String> {
 
 #[tracing::instrument(skip(resolver))]
 pub fn resolve_templates(first: Value, resolver: impl TemplateResolver) -> Result<Value> {
+    debug!(first = ?first, "Started resolving templates");
     let mut current = first;
     let mut stack: Vec<Value> = vec![];
 
     let mut extracted_template = extract_template_string(&mut current);
+    debug!(extracted = ?extracted_template, "extracted first template");
 
     //push the first on to the stack to be resolved
     stack.push(current.clone());
@@ -92,18 +87,19 @@ pub fn resolve_templates(first: Value, resolver: impl TemplateResolver) -> Resul
             stack.push(current.clone());
             recursion_cap += 1;
         } else {
-            error!("Hit Recursion Limit!");
             break;
         }
     }
-    debug!("Found {} templates in chain", stack.len());
+    debug!(num_in_chain = ?stack.len(), stack = ?stack, "Finished resolving templates");
     //merge stack in to one hashmap
     let mut out: Value = Mapping::new().into();
     for conf in stack.iter().rev() {
-        debug!(collapsing = ?conf, "Collapsing value");
         let conf_value: Value = conf.clone();
         deep_merge_yaml(&mut out, conf_value);
+        debug!(current = ?out, collapsing = ?conf, "Collapsing value step");
     }
+
+    debug!(collapsed = ?out, "Collapsed value");
     Ok(out)
 }
 
@@ -186,7 +182,7 @@ mod test {
 
     mod config_templates {
         use super::*;
-        use crate::config::{resolve_templates, TemplatedConfig};
+        use crate::config::resolve_templates;
         use serde_yaml::{Mapping, Value};
 
         #[test]

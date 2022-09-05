@@ -1,4 +1,3 @@
-use crate::config::TemplatedConfig;
 use anyhow::{bail, Result};
 use serde_yaml::Value;
 use std::fs;
@@ -57,7 +56,7 @@ impl TemplateResolver for FileResolver {
         let mut pathbuf = self.path.clone();
         pathbuf.push(Path::new(input));
 
-        debug!("Full path: {:?}", pathbuf);
+        debug!(canon = ?pathbuf, "Full path parsed");
 
         let yaml_path = pathbuf.with_extension("yml");
         let yml_path = pathbuf.with_extension("yaml");
@@ -76,6 +75,7 @@ impl TemplateResolver for FileResolver {
         let mut reader = BufReader::new(file);
 
         let deserialized: Value = serde_yaml::from_reader(reader)?;
+        debug!(deserialized = ?deserialized, "Deserialized template");
         Ok(deserialized)
     }
 }

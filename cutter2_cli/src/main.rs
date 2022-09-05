@@ -7,7 +7,7 @@ use std::fs;
 use std::fs::{metadata, File};
 use std::io::{self, BufReader};
 use std::path::{Path, PathBuf};
-use tracing::{info, Level};
+use tracing::{debug, info, Level};
 use tracing_subscriber::FmtSubscriber;
 use walkdir::{DirEntry, WalkDir};
 
@@ -33,6 +33,7 @@ struct Args {
 
 fn main() -> Result<()> {
     let subscriber = tracing_subscriber::fmt()
+        .pretty()
         .with_max_level(Level::DEBUG)
         .finish();
     tracing::subscriber::set_global_default(subscriber)?;
@@ -65,7 +66,7 @@ fn main() -> Result<()> {
     };
 
     for path in files_to_process {
-        info!("Pathbuf: {:?}", path);
+        debug!(path = ?path, "Found yaml at path");
         let in_file_yaml = File::open(path.as_path())?;
         let mut in_yaml_reader = BufReader::new(in_file_yaml);
         let config = Config::load(
