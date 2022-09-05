@@ -1,5 +1,6 @@
 use crate::config::TemplatedConfig;
 use anyhow::{bail, Result};
+use serde_yaml::Value;
 use std::fs;
 use std::fs::File;
 use std::io::BufReader;
@@ -8,7 +9,7 @@ use thiserror::Error;
 use tracing::debug;
 
 pub trait TemplateResolver {
-    fn resolve(&self, input: &str) -> Result<TemplatedConfig>;
+    fn resolve(&self, input: &str) -> Result<Value>;
 }
 
 /// Simple resolver that always returns default templatedconfig
@@ -17,8 +18,8 @@ pub trait TemplateResolver {
 pub struct NullResolver;
 
 impl TemplateResolver for NullResolver {
-    fn resolve(&self, _: &str) -> Result<TemplatedConfig> {
-        Ok(TemplatedConfig::default())
+    fn resolve(&self, _: &str) -> Result<Value> {
+        Ok(Value::default())
     }
 }
 
@@ -52,7 +53,7 @@ pub enum FileResolverError {
 
 impl TemplateResolver for FileResolver {
     #[tracing::instrument(skip(input))]
-    fn resolve(&self, input: &str) -> Result<TemplatedConfig> {
+    fn resolve(&self, input: &str) -> Result<Value> {
         let mut pathbuf = self.path.clone();
         pathbuf.push(Path::new(input));
 
@@ -74,7 +75,7 @@ impl TemplateResolver for FileResolver {
         let file = File::open(pathbuf.as_path())?;
         let mut reader = BufReader::new(file);
 
-        let deserialized: TemplatedConfig = serde_yaml::from_reader(reader)?;
+        let deserialized: Value = serde_yaml::from_reader(reader)?;
         Ok(deserialized)
     }
 }

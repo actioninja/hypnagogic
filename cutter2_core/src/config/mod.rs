@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use serde_yaml::{Mapping, Value};
 use std::io::{Read, Seek};
 use template_resolver::TemplateResolver;
-use tracing::debug;
+use tracing::{debug, error};
 
 pub const LATEST_VERSION: &str = "1";
 
@@ -52,17 +52,42 @@ pub struct TemplatedConfig {
     pub map: Mapping,
 }
 
+/// Seeks out template string from a value and returns it as a Some(String)
+/// If not found, returns none
+/// SIDE EFFECT: removes it from the `Value` if it finds it!
+fn extract_template_string(value: &mut Value) -> Option<String> {
+    match value {
+        Value::Mapping(mapping) => {
+            if let Some(found) = mapping.remove("template") {
+                let cloned = found.clone();
+                if let Value::String(string) = cloned {
+                    Some(string)
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        }
+        _ => None,
+    }
+}
+
 #[tracing::instrument(skip(resolver))]
-pub fn resolve_templates(first: TemplatedConfig, resolver: impl TemplateResolver) -> Result<Value> {
+pub fn resolve_templates(first: Value, resolver: impl TemplateResolver) -> Result<Value> {
     let mut current = first;
-    let mut stack: Vec<TemplatedConfig> = vec![];
+    let mut stack: Vec<Value> = vec![];
+
+    let mut extracted_template = extract_template_string(&mut current);
+
     //push the first on to the stack to be resolved
     stack.push(current.clone());
     let mut recursion_cap = 0;
     //Drill in to templates and resolve until no new ones found
     while recursion_cap < 100 {
-        if let Some(template) = &current.template {
+        if let Some(template) = &extracted_template {
             current = resolver.resolve(template)?;
+            extracted_template = extract_template_string(&mut current);
             debug!("Resolved config: {:?}", current);
             stack.push(current.clone());
             recursion_cap += 1;
@@ -70,14 +95,13 @@ pub fn resolve_templates(first: TemplatedConfig, resolver: impl TemplateResolver
             error!("Hit Recursion Limit!");
             break;
         }
-        stack.push(current.clone());
     }
     debug!("Found {} templates in chain", stack.len());
     //merge stack in to one hashmap
     let mut out: Value = Mapping::new().into();
     for conf in stack.iter().rev() {
         debug!(collapsing = ?conf, "Collapsing value");
-        let conf_value: Value = conf.map.clone().into();
+        let conf_value: Value = conf.clone();
         deep_merge_yaml(&mut out, conf_value);
     }
     Ok(out)
@@ -88,29 +112,48 @@ mod test {
     use super::*;
     use serde_yaml::{Mapping, Value};
 
+    #[test]
+    fn extract_template_test() {
+        let mut mapping = Mapping::new();
+        mapping.insert("template".into(), "found".into());
+        mapping.insert("still_there".into(), "junk".into());
+
+        let mut value: Value = mapping.into();
+
+        let extracted = extract_template_string(&mut value).unwrap();
+
+        let expected = "found".to_string();
+
+        assert_eq!(extracted, extracted);
+
+        let mut expected_value = Mapping::new();
+        expected_value.insert("still_there".into(), "junk".into());
+        let expected_value: Value = expected_value.into();
+
+        assert_eq!(value, expected_value);
+    }
+
     struct TestResolver;
 
     impl TemplateResolver for TestResolver {
-        fn resolve(&self, input: &str) -> Result<TemplatedConfig> {
+        fn resolve(&self, input: &str) -> Result<Value> {
             let mut map1 = Mapping::new();
+            map1.insert("template".into(), "second".into());
+
             map1.insert("second".into(), 2.into());
             map1.insert("third".into(), 2.into());
-            let first = TemplatedConfig {
-                template: Some("second".to_string()),
-                map: map1,
-            };
 
             let mut map2 = Mapping::new();
+            map2.insert("template".into(), Value::Null);
+
             map2.insert("first".into(), 3.into());
             map2.insert("second".into(), 3.into());
             map2.insert("third".into(), 3.into());
             map2.insert("fourth".into(), 3.into());
-            let second = TemplatedConfig {
-                template: None,
-                map: map2,
-            };
 
             let mut map4 = Mapping::new();
+            map4.insert("template".into(), "fifth".into());
+
             map4.insert("first".into(), 4.into());
             map4.insert("second".into(), 4.into());
             map4.insert("third".into(), 4.into());
@@ -118,12 +161,10 @@ mod test {
             inner_map4.insert("inner1".into(), 4.into());
             inner_map4.insert("inner2".into(), 4.into());
             map4.insert("inner".into(), inner_map4.into());
-            let fourth = TemplatedConfig {
-                template: Some("fifth".to_string()),
-                map: map4,
-            };
 
             let mut map5 = Mapping::new();
+            map5.insert("template".into(), Value::Null);
+
             map5.insert("first".into(), 5.into());
             map5.insert("second".into(), 5.into());
             map5.insert("third".into(), 5.into());
@@ -132,16 +173,12 @@ mod test {
             inner_map5.insert("inner2".into(), 5.into());
             inner_map5.insert("inner3".into(), 5.into());
             map5.insert("inner".into(), inner_map5.into());
-            let fifth = TemplatedConfig {
-                template: None,
-                map: map5,
-            };
 
             match input {
-                "first" => Ok(first),
-                "second" => Ok(second),
-                "fourth" => Ok(fourth),
-                "fifth" => Ok(fifth),
+                "first" => Ok(map1.into()),
+                "second" => Ok(map2.into()),
+                "fourth" => Ok(map4.into()),
+                "fifth" => Ok(map5.into()),
                 _ => panic!("Malformed test"),
             }
         }
@@ -155,14 +192,12 @@ mod test {
         #[test]
         fn flattening_simple() {
             let mut map = Mapping::new();
+            map.insert("template".into(), "first".into());
+
             map.insert("first".into(), 1.into());
             map.insert("second".into(), 1.into());
-            let test_template = TemplatedConfig {
-                template: Some("first".to_string()),
-                map,
-            };
 
-            let result = resolve_templates(test_template, TestResolver {}).unwrap();
+            let result = resolve_templates(map.into(), TestResolver).unwrap();
             let mut expected = Mapping::new();
             expected.insert("first".into(), 1.into());
             expected.insert("second".into(), 1.into());
@@ -175,6 +210,8 @@ mod test {
         #[test]
         fn flattening_complex() {
             let mut map = Mapping::new();
+            map.insert("template".into(), "fourth".into());
+
             map.insert("first".into(), 1.into());
             map.insert("second".into(), 1.into());
             let mut inner_map = Mapping::new();
@@ -182,12 +219,7 @@ mod test {
 
             map.insert("inner".into(), inner_map.into());
 
-            let test_template = TemplatedConfig {
-                template: Some("fourth".to_string()),
-                map,
-            };
-
-            let result = resolve_templates(test_template, TestResolver {}).unwrap();
+            let result = resolve_templates(map.into(), TestResolver).unwrap();
 
             let mut expected = Mapping::new();
             expected.insert("first".into(), 1.into());
