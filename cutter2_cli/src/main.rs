@@ -7,6 +7,8 @@ use std::fs;
 use std::fs::{metadata, File};
 use std::io::{self, BufReader};
 use std::path::{Path, PathBuf};
+use tracing::{info, Level};
+use tracing_subscriber::FmtSubscriber;
 use walkdir::{DirEntry, WalkDir};
 
 #[derive(Parser, Debug)]
@@ -30,6 +32,11 @@ struct Args {
 }
 
 fn main() -> Result<()> {
+    let subscriber = tracing_subscriber::fmt()
+        .with_max_level(Level::DEBUG)
+        .finish();
+    tracing::subscriber::set_global_default(subscriber)?;
+
     let args = Args::parse();
     let Args {
         verbose,
@@ -58,7 +65,7 @@ fn main() -> Result<()> {
     };
 
     for path in files_to_process {
-        println!("Pathbuf: {:?}", path);
+        info!("Pathbuf: {:?}", path);
         let in_file_yaml = File::open(path.as_path())?;
         let mut in_yaml_reader = BufReader::new(in_file_yaml);
         let config = Config::load(

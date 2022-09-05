@@ -23,6 +23,8 @@ impl<T> CornersData<T> {}
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Config {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
     pub file_prefix: Option<String>,
     pub mode: CutterMode,
 }
@@ -31,6 +33,7 @@ impl Config {
     /// Load a config from a reader and provide a collapsed, template resolved back.
     /// # Errors
     /// Returns an error if serde fails to load from the reader
+    #[tracing::instrument(skip(resolver, input))]
     pub fn load<R: Read + Seek>(input: &mut R, resolver: impl TemplateResolver) -> Result<Self> {
         let config = serde_yaml::from_reader(input)?;
 
@@ -55,10 +58,17 @@ pub fn resolve_templates(first: TemplatedConfig, resolver: impl TemplateResolver
     let mut stack: Vec<TemplatedConfig> = vec![];
     //push the first on to the stack to be resolved
     stack.push(current.clone());
+    let mut recursion_cap = 0;
     //Drill in to templates and resolve until no new ones found
-    while let Some(template) = &current.template {
-        if let Ok(found) = resolver.resolve(template) {
-            current = found;
+    while recursion_cap < 100 {
+        if let Some(template) = &current.template {
+            current = resolver.resolve(template)?;
+            debug!("Resolved config: {:?}", current);
+            stack.push(current.clone());
+            recursion_cap += 1;
+        } else {
+            error!("Hit Recursion Limit!");
+            break;
         }
         stack.push(current.clone());
     }
@@ -191,6 +201,29 @@ mod test {
 
             let expected_value: Value = expected.into();
             assert_eq!(result, expected_value);
+        }
+    }
+
+    mod config {
+        use super::*;
+        use crate::config::template_resolver::NullResolver;
+        use crate::modes::cutters::bitmask_slice::BitmaskSlice;
+        use std::io::Cursor;
+
+        #[test]
+        fn symmetrical_serialize() {
+            let config = Config {
+                file_prefix: None,
+                mode: BitmaskSlice::default().into(),
+            };
+            let config_string = serde_yaml::to_string(&config).unwrap();
+            println!("{}", config_string);
+
+            let mut reader = Cursor::new(&config_string);
+
+            let result = Config::load(&mut reader, NullResolver).unwrap();
+
+            assert_eq!(result, config);
         }
     }
 }

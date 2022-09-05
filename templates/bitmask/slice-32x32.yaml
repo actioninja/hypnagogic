@@ -1,3 +1,4 @@
+file_prefix: GENERATED-
 mode: !BitmaskSlice
   icon_size_x: 32
   icon_size_y: 32
@@ -27,3 +28,4 @@ mode: !BitmaskSlice
       output_start: 0
   produce_dirs: false
   is_diagonal: false
+
