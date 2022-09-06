@@ -1,5 +1,5 @@
 use serde_yaml::Value;
-use tracing::{debug, trace};
+use tracing::trace;
 
 pub mod adjacency;
 pub mod corners;

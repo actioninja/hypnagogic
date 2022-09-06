@@ -282,7 +282,7 @@ impl CutterModeConfig for BitmaskSlice {
     fn debug_output<R: BufRead + Seek>(&self, input: &mut R) -> Result<DynamicImage> {
         debug!("Starting debug output");
         let mut img = image::load(input, ImageFormat::Png)?;
-        let (corners, prefabs) = self.generate_corners(&mut img)?;
+        let (corners, _prefabs) = self.generate_corners(&mut img)?;
 
         let num_types = corners.get(Corner::NorthEast).unwrap().len() as u32;
         trace!(number = ?num_types, "found types");
@@ -360,13 +360,6 @@ const SIZE_OF_CARDINALS: usize = usize::pow(2, 4);
 const SIZE_OF_DIAGONALS: usize = usize::pow(2, 8);
 
 impl BitmaskSlice {
-    //TODO: Get rid of this stupid hack and just do it at deserialize time
-    fn generate_side_data(&mut self) {
-        if self.sides.len() > 0 {
-            return;
-        }
-    }
-
     #[tracing::instrument]
     fn get_dir_step(&self, side: Side) -> u32 {
         let side_info = self.sides.get(side).unwrap();

@@ -6,11 +6,10 @@ use cutter2_core::modes::CutterModeConfig;
 use image::DynamicImage;
 use std::fs;
 use std::fs::{metadata, File};
-use std::io::{self, BufReader};
+use std::io::BufReader;
 use std::path::{Path, PathBuf};
-use tracing::{debug, info, Level};
-use tracing_subscriber::FmtSubscriber;
-use walkdir::{DirEntry, WalkDir};
+use tracing::{info, Level};
+use walkdir::WalkDir;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
@@ -99,6 +98,25 @@ fn main() -> Result<()> {
 
         let out = config.mode.perform_operation(&mut in_img_reader)?;
 
+        if let Some(output) = &output {
+            let output_path = Path::new(output);
+            fs::create_dir_all(output_path)?;
+        }
+
+        let process_path = |path: &mut PathBuf| {
+            if flatten {
+                let file_name = path.file_name().map(|s| s.to_os_string()).unwrap();
+                path.clear();
+                path.push(file_name);
+            }
+
+            if let Some(output) = &output {
+                let buf = PathBuf::from(output).join(&path);
+                path.clear();
+                path.push(buf);
+            }
+        };
+
         if debug {
             let in_img_file = File::open(in_img_path.as_path())?;
             let mut debug_reader = BufReader::new(in_img_file);
@@ -108,6 +126,9 @@ fn main() -> Result<()> {
             let current_file_name = debug_path.file_name().unwrap().to_str().unwrap();
             debug_path.set_file_name(format!("{current_file_name}-DEBUGOUT"));
             debug_path.set_extension("png");
+
+            process_path(&mut debug_path);
+
             info!(path = ?debug_path, "Writing debug");
             debug_out.save(debug_path)?
         }
@@ -119,6 +140,9 @@ fn main() -> Result<()> {
             new_path.set_file_name(format!("{prefix}{current_file_name}{name_hint}"));
             new_path.set_extension("dmi");
             info!(path = ?new_path, "Writing output");
+
+            process_path(&mut new_path);
+
             let mut file = File::create(new_path)?;
 
             icon.save(&mut file)?;

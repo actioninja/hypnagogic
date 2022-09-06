@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::Result;
 use serde_yaml::Value;
 use std::fs;
 use std::fs::File;
@@ -72,7 +72,7 @@ impl TemplateResolver for FileResolver {
         trace!("Found template at {:?}", pathbuf);
 
         let file = File::open(pathbuf.as_path())?;
-        let mut reader = BufReader::new(file);
+        let reader = BufReader::new(file);
 
         let deserialized: Value = serde_yaml::from_reader(reader)?;
         debug!(deserialized = ?deserialized, "Deserialized template");
