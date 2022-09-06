@@ -21,32 +21,50 @@ struct Args {
     /// Output as flat files instead of mirroring directory tree
     #[clap(short, long, value_parser)]
     flatten: bool,
-    /// Print debug information
+    /// Print debug information and produce debug outputs
     #[clap(short, long, value_parser)]
     debug: bool,
+    /// Doesn't wait for a keypress after running. For CI or toolchain usage.
+    #[clap(short = 'w', long, value_parser)]
+    dont_wait: bool,
     /// Output directory of folders
-    #[clap(short, long, value_parser, default_value_t = String::from("output"))]
-    output: String,
+    #[clap(short, long, value_parser)]
+    output: Option<String>,
     /// Input directory/file
     #[clap(value_parser)]
     input: String,
 }
 
 fn main() -> Result<()> {
-    let subscriber = tracing_subscriber::fmt()
-        .pretty()
-        .with_max_level(Level::DEBUG)
-        .finish();
-    tracing::subscriber::set_global_default(subscriber)?;
-
     let args = Args::parse();
     let Args {
         verbose,
         flatten,
         debug,
+        dont_wait,
         output,
         input,
     } = args;
+
+    if debug {
+        let subscriber = tracing_subscriber::fmt()
+            .pretty()
+            .with_max_level(Level::DEBUG)
+            .finish();
+        tracing::subscriber::set_global_default(subscriber)?;
+    } else if verbose {
+        let subscriber = tracing_subscriber::fmt()
+            .with_max_level(Level::INFO)
+            .compact()
+            .finish();
+        tracing::subscriber::set_global_default(subscriber)?;
+    } else {
+        let subscriber = tracing_subscriber::fmt()
+            .compact()
+            .with_max_level(Level::WARN)
+            .finish();
+        tracing::subscriber::set_global_default(subscriber)?;
+    };
 
     let files_to_process: Vec<PathBuf> = if metadata(&input)?.is_file() {
         vec![Path::new(&input).to_path_buf()]
@@ -67,7 +85,7 @@ fn main() -> Result<()> {
     };
 
     for path in files_to_process {
-        debug!(path = ?path, "Found yaml at path");
+        info!(path = ?path, "Found yaml at path");
         let in_file_yaml = File::open(path.as_path())?;
         let mut in_yaml_reader = BufReader::new(in_file_yaml);
         let config = Config::load(
@@ -85,19 +103,37 @@ fn main() -> Result<()> {
             let in_img_file = File::open(in_img_path.as_path())?;
             let mut debug_reader = BufReader::new(in_img_file);
             let debug_out: DynamicImage = config.mode.debug_output(&mut debug_reader)?;
-            debug_out.save("junk/penis.png")?
+            let mut debug_path = in_img_path.clone();
+            debug_path.set_extension("");
+            let current_file_name = debug_path.file_name().unwrap().to_str().unwrap();
+            debug_path.set_file_name(format!("{current_file_name}-DEBUGOUT"));
+            debug_path.set_extension("png");
+            info!(path = ?debug_path, "Writing debug");
+            debug_out.save(debug_path)?
         }
 
+        let prefix = config.file_prefix.unwrap_or_else(|| "".to_string());
         for (name_hint, icon) in out {
-            let output_path = Path::new(name_hint.as_str());
-            let mut file = File::create(output_path)?;
+            let mut new_path = in_img_path.clone();
+            let current_file_name = new_path.file_name().unwrap().to_str().unwrap();
+            new_path.set_file_name(format!("{prefix}{current_file_name}{name_hint}"));
+            new_path.set_extension("dmi");
+            info!(path = ?new_path, "Writing output");
+            let mut file = File::create(new_path)?;
+
             icon.save(&mut file)?;
         }
     }
 
+    /*
     let output_path = Path::new(&output);
     if !output_path.is_dir() {
         fs::create_dir_all(output_path)?;
+    }
+     */
+
+    if !dont_wait {
+        dont_disappear::any_key_to_continue::default();
     }
 
     Ok(())

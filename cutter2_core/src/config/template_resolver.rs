@@ -5,7 +5,7 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
-use tracing::debug;
+use tracing::{debug, trace};
 
 pub trait TemplateResolver {
     fn resolve(&self, input: &str) -> Result<Value>;
@@ -69,7 +69,7 @@ impl TemplateResolver for FileResolver {
             return Err(FileResolverError::TemplateNotFound(pathbuf).into());
         };
 
-        debug!("Found template at {:?}", pathbuf);
+        trace!("Found template at {:?}", pathbuf);
 
         let file = File::open(pathbuf.as_path())?;
         let mut reader = BufReader::new(file);

@@ -13,6 +13,8 @@ pub trait CutterModeConfig {
     fn perform_operation<R: BufRead + Seek>(&self, input: &mut R) -> Result<Vec<(String, Icon)>>;
 
     fn debug_output<R: BufRead + Seek>(&self, input: &mut R) -> Result<DynamicImage>;
+
+    fn post_load_init(&mut self) {}
 }
 
 #[enum_dispatch(CutterModeConfig)]

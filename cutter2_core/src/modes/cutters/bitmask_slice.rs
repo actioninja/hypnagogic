@@ -7,11 +7,11 @@ use image::{imageops, DynamicImage, GenericImageView, ImageFormat};
 use serde::{Deserialize, Serialize};
 use shrinkwraprs::Shrinkwrap;
 use std::collections::HashMap;
-use std::io::{BufRead, Read, Seek};
-use tracing::debug;
+use std::io::{BufRead, Seek};
+use tracing::{debug, trace};
 
 use crate::modes::CutterModeConfig;
-use crate::util::corners::{Corner, CornerData, CornerType, Side};
+use crate::util::corners::{Corner, CornerType, Side};
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Shrinkwrap)]
 #[serde(transparent)]
@@ -50,7 +50,7 @@ impl Default for SideConfig {
             Side::West,
             SideSpacing {
                 start: 0,
-                end: 0,
+                end: 16,
                 output_start: 0,
             },
         );
@@ -96,7 +96,13 @@ pub struct BitmaskSlice {
 
     pub positions: CornerConfig,
 
-    pub sides: SideConfig,
+    #[serde(default)]
+    pub cut_position_x: u32,
+    #[serde(default)]
+    pub cut_position_y: u32,
+
+    #[serde(skip)]
+    sides: SideConfig,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(default)]
@@ -129,6 +135,9 @@ impl Default for BitmaskSlice {
             output_icon_size_y: 32,
 
             positions: CornerConfig::default(),
+
+            cut_position_x: 16,
+            cut_position_y: 16,
 
             sides: SideConfig::default(),
 
@@ -217,8 +226,6 @@ impl CutterModeConfig for BitmaskSlice {
                             vertical_start,
                         );
                     }
-                    frame_image
-                        .save_with_format(format!("junk/{signature}.png"), ImageFormat::Png)?;
                     icon_state_images.push(frame_image);
                 }
             }
@@ -247,7 +254,7 @@ impl CutterModeConfig for BitmaskSlice {
 
             for icon_state_dir in &icon_directions {
                 let rotated_sig = adjacency.rotate_to(*icon_state_dir);
-                debug!(sig = ?icon_state_dir, rotated_sig = ?rotated_sig, "Rotated");
+                trace!(sig = ?icon_state_dir, rotated_sig = ?rotated_sig, "Rotated");
                 icon_state_frames.extend(assembled[&rotated_sig].clone());
             }
 
@@ -268,9 +275,7 @@ impl CutterModeConfig for BitmaskSlice {
             states: icon_states,
         };
 
-        let output_name = format!("{}.dmi", "blah");
-
-        Ok(vec![(output_name, output_icon)])
+        Ok(vec![("".to_string(), output_icon)])
     }
 
     #[tracing::instrument(skip(input))]
@@ -280,7 +285,7 @@ impl CutterModeConfig for BitmaskSlice {
         let (corners, prefabs) = self.generate_corners(&mut img)?;
 
         let num_types = corners.get(Corner::NorthEast).unwrap().len() as u32;
-        debug!(number = ?num_types, "found types");
+        trace!(number = ?num_types, "found types");
 
         let mut corners_image =
             DynamicImage::new_rgb8(num_types * self.icon_size_x, self.icon_size_y);
@@ -289,7 +294,7 @@ impl CutterModeConfig for BitmaskSlice {
             let (horizontal, vertical) = corner.sides_of_corner();
             let horizontal_start = self.sides.get(horizontal).unwrap().start as i64;
             let vertical_start = self.sides.get(vertical).unwrap().start as i64;
-            debug!(corner = ?corner, horizontal_start = ?horizontal_start, vertical_start = ?vertical_start, "Starting corner");
+            trace!(corner = ?corner, horizontal_start = ?horizontal_start, vertical_start = ?vertical_start, "Starting corner");
             for (corner_type, vec) in map.iter() {
                 let position = (*self.positions.get(corner_type).unwrap()) as i64;
                 let frame = vec.get(0).unwrap();
@@ -305,6 +310,45 @@ impl CutterModeConfig for BitmaskSlice {
 
         Ok(corners_image)
     }
+
+    #[tracing::instrument]
+    fn post_load_init(&mut self) {
+        debug!("Starting post-load");
+        let mut inner = Map::new();
+        inner.insert(
+            Side::West,
+            SideSpacing {
+                start: 0,
+                end: self.cut_position_x,
+                output_start: 0,
+            },
+        );
+        inner.insert(
+            Side::North,
+            SideSpacing {
+                start: 0,
+                end: self.cut_position_y,
+                output_start: 0,
+            },
+        );
+        inner.insert(
+            Side::East,
+            SideSpacing {
+                start: self.cut_position_x,
+                end: self.icon_size_x,
+                output_start: self.cut_position_x,
+            },
+        );
+        inner.insert(
+            Side::South,
+            SideSpacing {
+                start: self.cut_position_y,
+                end: self.icon_size_y,
+                output_start: self.cut_position_y,
+            },
+        );
+        self.sides = SideConfig(inner);
+    }
 }
 
 type Corners = Map<Corner, Map<CornerType, Vec<DynamicImage>>>;
@@ -316,10 +360,17 @@ const SIZE_OF_CARDINALS: usize = usize::pow(2, 4);
 const SIZE_OF_DIAGONALS: usize = usize::pow(2, 8);
 
 impl BitmaskSlice {
+    //TODO: Get rid of this stupid hack and just do it at deserialize time
+    fn generate_side_data(&mut self) {
+        if self.sides.len() > 0 {
+            return;
+        }
+    }
+
     #[tracing::instrument]
     fn get_dir_step(&self, side: Side) -> u32 {
         let side_info = self.sides.get(side).unwrap();
-        debug!(end = ?side_info.end, start = ?side_info.start, "getting step");
+        trace!(end = ?side_info.end, start = ?side_info.start, "getting step");
         side_info.end - side_info.start
     }
 
@@ -361,7 +412,7 @@ impl BitmaskSlice {
 
                     let width = self.get_dir_step(x_side);
                     let height = self.get_dir_step(y_side);
-                    debug!(
+                    trace!(
                         corner = ?corner,
                         corner_type = ?corner_type,
                         x = ?x,

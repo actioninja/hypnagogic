@@ -1,4 +1,4 @@
-template: bitmask/slice-32x32
+template: bitmask/slice-32x32-diagonals
 mode: !BitmaskSlice
   cut_position_x: 16
   cut_position_y: 5

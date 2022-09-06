@@ -9,23 +9,8 @@ mode: !BitmaskSlice
     concave: 1
     horizontal: 2
     vertical: 3
-  sides:
-    north:
-      start: 0
-      end: 5
-      output_start: 0
-    south:
-      start: 5
-      end: 32
-      output_start: 5
-    east:
-      start: 16
-      end: 32
-      output_start: 16
-    west:
-      start: 0
-      end: 16
-      output_start: 0
+  cut_position_x: 16
+  cut_position_y: 16
   produce_dirs: false
   is_diagonal: false
 
