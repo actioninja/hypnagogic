@@ -14,6 +14,19 @@ pub enum Side {
     West,
 }
 
+impl Side {
+    pub fn dmi_cardinals() -> [Self; 4] {
+        [Self::South, Self::North, Self::East, Self::West]
+    }
+
+    pub const fn is_vertical(self) -> bool {
+        match self {
+            Self::North | Self::South => true,
+            Self::East | Self::West => false,
+        }
+    }
+}
+
 #[derive(
     Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd, Debug, Sequence, Serialize, Deserialize, Key,
 )]

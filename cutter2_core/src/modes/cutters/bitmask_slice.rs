@@ -30,56 +30,16 @@ impl Default for CornerConfig {
     }
 }
 
-#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Shrinkwrap)]
-#[serde(transparent)]
-pub struct SideConfig(Map<Side, SideSpacing>);
-
-impl Default for SideConfig {
-    fn default() -> Self {
-        let mut out = Map::new();
-
-        out.insert(
-            Side::North,
-            SideSpacing {
-                start: 0,
-                end: 16,
-                output_start: 0,
-            },
-        );
-        out.insert(
-            Side::West,
-            SideSpacing {
-                start: 0,
-                end: 16,
-                output_start: 0,
-            },
-        );
-        out.insert(
-            Side::East,
-            SideSpacing {
-                start: 16,
-                end: 32,
-                output_start: 16,
-            },
-        );
-        out.insert(
-            Side::South,
-            SideSpacing {
-                start: 16,
-                end: 32,
-                output_start: 16,
-            },
-        );
-
-        SideConfig(out)
-    }
-}
-
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct SideSpacing {
     pub start: u32,
     pub end: u32,
-    pub output_start: u32,
+}
+
+impl SideSpacing {
+    pub fn step(self) -> u32 {
+        self.end - self.start
+    }
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -91,6 +51,8 @@ pub struct BitmaskSlice {
     pub icon_size_x: u32,
     pub icon_size_y: u32,
 
+    pub output_icon_pos_x: u32,
+    pub output_icon_pos_y: u32,
     pub output_icon_size_x: u32,
     pub output_icon_size_y: u32,
 
@@ -100,9 +62,6 @@ pub struct BitmaskSlice {
     pub cut_position_x: u32,
     #[serde(default)]
     pub cut_position_y: u32,
-
-    #[serde(skip)]
-    sides: SideConfig,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(default)]
@@ -131,6 +90,8 @@ impl Default for BitmaskSlice {
             icon_size_x: 32,
             icon_size_y: 32,
 
+            output_icon_pos_x: 0,
+            output_icon_pos_y: 0,
             output_icon_size_x: 32,
             output_icon_size_y: 32,
 
@@ -138,8 +99,6 @@ impl Default for BitmaskSlice {
 
             cut_position_x: 16,
             cut_position_y: 16,
-
-            sides: SideConfig::default(),
 
             delay: None,
 
@@ -178,59 +137,7 @@ impl CutterModeConfig for BitmaskSlice {
         };
 
         //First phase: generate icons
-        let west_output_start = self.sides.get(Side::West).unwrap().output_start as i64;
-        let south_output_start = self.sides.get(Side::South).unwrap().output_start as i64;
-        let mut assembled: HashMap<Adjacency, Vec<DynamicImage>> = HashMap::new();
-        for signature in 0..possible_states {
-            let adjacency = Adjacency::from_bits(signature as u8).unwrap();
-            let mut icon_state_images = vec![];
-            for frame in 0..num_frames {
-                if prefabs.contains_key(&adjacency) {
-                    let mut frame_image =
-                        DynamicImage::new_rgb8(self.output_icon_size_x, self.output_icon_size_y);
-                    imageops::replace(
-                        &mut frame_image,
-                        prefabs
-                            .get(&adjacency)
-                            .unwrap()
-                            .get(frame as usize)
-                            .unwrap(),
-                        west_output_start,
-                        south_output_start,
-                    );
-
-                    icon_state_images.push(frame_image);
-                } else {
-                    let mut frame_image =
-                        DynamicImage::new_rgb8(self.output_icon_size_x, self.output_icon_size_y);
-
-                    for corner in all::<Corner>() {
-                        let corner_type = adjacency.get_corner_type(corner);
-                        let corner_img = &corners
-                            .get(corner)
-                            .unwrap()
-                            .get(corner_type)
-                            .unwrap()
-                            .get(frame as usize)
-                            .unwrap();
-
-                        let (horizontal, vertical) = corner.sides_of_corner();
-
-                        let horizontal_start =
-                            self.sides.get(horizontal).unwrap().output_start as i64;
-                        let vertical_start = self.sides.get(vertical).unwrap().output_start as i64;
-                        imageops::overlay(
-                            &mut frame_image,
-                            *corner_img,
-                            horizontal_start,
-                            vertical_start,
-                        );
-                    }
-                    icon_state_images.push(frame_image);
-                }
-            }
-            assembled.insert(adjacency, icon_state_images);
-        }
+        let assembled = self.generate_icons(&corners, prefabs, num_frames, possible_states);
 
         // Second phase: map to byond icon states and produce dirs if need
         // Even though this is the same loop as above, all states need to be generated first for the
@@ -292,62 +199,23 @@ impl CutterModeConfig for BitmaskSlice {
 
         for (corner, map) in corners.iter() {
             let (horizontal, vertical) = corner.sides_of_corner();
-            let horizontal_start = self.sides.get(horizontal).unwrap().start as i64;
-            let vertical_start = self.sides.get(vertical).unwrap().start as i64;
-            trace!(corner = ?corner, horizontal_start = ?horizontal_start, vertical_start = ?vertical_start, "Starting corner");
+            let horizontal = self.get_side_info(horizontal);
+            let vertical = self.get_side_info(vertical);
+            trace!(corner = ?corner, horizontal = ?horizontal, vertical = ?vertical, "Starting corner");
             for (corner_type, vec) in map.iter() {
-                let position = (*self.positions.get(corner_type).unwrap()) as i64;
+                let position = (*self.positions.get(corner_type).unwrap());
                 let frame = vec.get(0).unwrap();
                 frame.save(format!("junk/{corner:?}-{corner_type:?}.png"))?;
                 imageops::replace(
                     &mut corners_image,
                     frame,
-                    (position * (self.icon_size_x as i64)) + horizontal_start,
-                    vertical_start,
+                    ((position * self.icon_size_x) + horizontal.start) as i64,
+                    vertical.start as i64,
                 );
             }
         }
 
         Ok(corners_image)
-    }
-
-    #[tracing::instrument]
-    fn post_load_init(&mut self) {
-        debug!("Starting post-load");
-        let mut inner = Map::new();
-        inner.insert(
-            Side::West,
-            SideSpacing {
-                start: 0,
-                end: self.cut_position_x,
-                output_start: 0,
-            },
-        );
-        inner.insert(
-            Side::North,
-            SideSpacing {
-                start: 0,
-                end: self.cut_position_y,
-                output_start: 0,
-            },
-        );
-        inner.insert(
-            Side::East,
-            SideSpacing {
-                start: self.cut_position_x,
-                end: self.icon_size_x,
-                output_start: self.cut_position_x,
-            },
-        );
-        inner.insert(
-            Side::South,
-            SideSpacing {
-                start: self.cut_position_y,
-                end: self.icon_size_y,
-                output_start: self.cut_position_y,
-            },
-        );
-        self.sides = SideConfig(inner);
     }
 }
 
@@ -356,17 +224,10 @@ type Prefabs = HashMap<Adjacency, Vec<DynamicImage>>;
 
 //possible icon set is the powerset of the possible directions
 //the size of a powerset is always 2^n where n is number of discrete elements
-const SIZE_OF_CARDINALS: usize = usize::pow(2, 4);
-const SIZE_OF_DIAGONALS: usize = usize::pow(2, 8);
+pub const SIZE_OF_CARDINALS: usize = usize::pow(2, 4);
+pub const SIZE_OF_DIAGONALS: usize = usize::pow(2, 8);
 
 impl BitmaskSlice {
-    #[tracing::instrument]
-    fn get_dir_step(&self, side: Side) -> u32 {
-        let side_info = self.sides.get(side).unwrap();
-        trace!(end = ?side_info.end, start = ?side_info.start, "getting step");
-        side_info.end - side_info.start
-    }
-
     /// Generates corners
     /// # Errors
     /// Errors on malformed image
@@ -397,14 +258,16 @@ impl BitmaskSlice {
 
                     let (x_side, y_side) = corner.sides_of_corner();
 
-                    let x_offset = self.sides.get(x_side).unwrap().start;
-                    let y_offset = self.sides.get(y_side).unwrap().start;
+                    let x_spacing = self.get_side_info(x_side);
+                    let y_spacing = self.get_side_info(y_side);
+                    let x_offset = x_spacing.start;
+                    let y_offset = y_spacing.start;
 
                     let x = (position * self.icon_size_x) + x_offset;
                     let y = (frame_num * self.icon_size_y) + y_offset;
 
-                    let width = self.get_dir_step(x_side);
-                    let height = self.get_dir_step(y_side);
+                    let width = x_spacing.step();
+                    let height = y_spacing.step();
                     trace!(
                         corner = ?corner,
                         corner_type = ?corner_type,
@@ -437,5 +300,91 @@ impl BitmaskSlice {
         }
 
         Ok((corners, prefabs))
+    }
+
+    /// Blah
+    /// # Panics
+    /// Whatever
+    #[must_use]
+    pub fn generate_icons(
+        &self,
+        corners: &Corners,
+        prefabs: Prefabs,
+        num_frames: u32,
+        possible_states: usize,
+    ) -> HashMap<Adjacency, Vec<DynamicImage>> {
+        let mut assembled: HashMap<Adjacency, Vec<DynamicImage>> = HashMap::new();
+        for signature in 0..possible_states {
+            let adjacency = Adjacency::from_bits(signature as u8).unwrap();
+            let mut icon_state_images = vec![];
+            for frame in 0..num_frames {
+                if prefabs.contains_key(&adjacency) {
+                    let mut frame_image =
+                        DynamicImage::new_rgb8(self.output_icon_size_x, self.output_icon_size_y);
+                    imageops::replace(
+                        &mut frame_image,
+                        prefabs
+                            .get(&adjacency)
+                            .unwrap()
+                            .get(frame as usize)
+                            .unwrap(),
+                        self.output_icon_pos_x as i64,
+                        self.output_icon_pos_y as i64,
+                    );
+
+                    icon_state_images.push(frame_image);
+                } else {
+                    let mut frame_image =
+                        DynamicImage::new_rgb8(self.output_icon_size_x, self.output_icon_size_y);
+
+                    for corner in all::<Corner>() {
+                        let corner_type = adjacency.get_corner_type(corner);
+                        let corner_img = &corners
+                            .get(corner)
+                            .unwrap()
+                            .get(corner_type)
+                            .unwrap()
+                            .get(frame as usize)
+                            .unwrap();
+
+                        let (horizontal, vertical) = corner.sides_of_corner();
+                        let horizontal = self.get_side_info(horizontal);
+                        let vertical = self.get_side_info(vertical);
+
+                        imageops::overlay(
+                            &mut frame_image,
+                            *corner_img,
+                            horizontal.start as i64,
+                            vertical.start as i64,
+                        );
+                    }
+                    icon_state_images.push(frame_image);
+                }
+            }
+            assembled.insert(adjacency, icon_state_images);
+        }
+        assembled
+    }
+
+    #[must_use]
+    pub fn get_side_info(&self, side: Side) -> SideSpacing {
+        match side {
+            Side::North => SideSpacing {
+                start: 0,
+                end: self.cut_position_y,
+            },
+            Side::South => SideSpacing {
+                start: self.cut_position_y,
+                end: self.icon_size_y,
+            },
+            Side::East => SideSpacing {
+                start: self.cut_position_x,
+                end: self.icon_size_x,
+            },
+            Side::West => SideSpacing {
+                start: 0,
+                end: self.cut_position_x,
+            },
+        }
     }
 }

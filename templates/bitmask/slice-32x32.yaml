@@ -2,6 +2,8 @@ file_prefix: GENERATED-
 mode: !BitmaskSlice
   icon_size_x: 32
   icon_size_y: 32
+  output_icon_pos_x: 0
+  output_icon_pos_y: 0
   output_icon_size_x: 32
   output_icon_size_y: 32
   positions:

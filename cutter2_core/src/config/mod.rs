@@ -42,7 +42,6 @@ impl Config {
 
         let mut out_config: Self = serde_yaml::from_value(result_value)?;
         debug!(config = ?out_config, "Deserialized");
-        out_config.mode.post_load_init();
         Ok(out_config)
     }
 }

@@ -1,4 +1,5 @@
 use anyhow::Result;
+use cutters::bitmask_dir_visibility::BitmaskDirectionalVis;
 use cutters::bitmask_slice::BitmaskSlice;
 use dmi::icon::Icon;
 use enum_dispatch::enum_dispatch;
@@ -7,18 +8,18 @@ use serde::{Deserialize, Serialize};
 use std::io::{BufRead, Seek};
 
 pub mod cutters;
+pub mod format_converter;
 
 #[enum_dispatch]
 pub trait CutterModeConfig {
     fn perform_operation<R: BufRead + Seek>(&self, input: &mut R) -> Result<Vec<(String, Icon)>>;
 
     fn debug_output<R: BufRead + Seek>(&self, input: &mut R) -> Result<DynamicImage>;
-
-    fn post_load_init(&mut self) {}
 }
 
 #[enum_dispatch(CutterModeConfig)]
 #[derive(Clone, PartialEq, Serialize, Deserialize, Debug)]
 pub enum CutterMode {
     BitmaskSlice,
+    BitmaskDirectionalVis,
 }
