@@ -8,6 +8,10 @@ use thiserror::Error;
 use tracing::{debug, trace};
 
 pub trait TemplateResolver {
+    /// Determines how exactly to resolve template strings. Primarily for the ability to manually
+    /// pass them in without accessing FS in tests
+    /// # Errors
+    /// Throws an error if resolution fails
     fn resolve(&self, input: &str) -> Result<Value>;
 }
 

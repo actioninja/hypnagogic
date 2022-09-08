@@ -1,7 +1,6 @@
 pub mod template_resolver;
 
 use crate::modes::CutterMode;
-use crate::modes::CutterModeConfig;
 use crate::util::deep_merge_yaml;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
@@ -22,7 +21,7 @@ pub struct CornersData<T> {
 
 impl<T> CornersData<T> {}
 
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct Config {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(default)]
@@ -40,7 +39,7 @@ impl Config {
 
         let result_value = resolve_templates(config, resolver)?;
 
-        let mut out_config: Self = serde_yaml::from_value(result_value)?;
+        let out_config: Self = serde_yaml::from_value(result_value)?;
         debug!(config = ?out_config, "Deserialized");
         Ok(out_config)
     }
@@ -52,13 +51,8 @@ impl Config {
 fn extract_template_string(value: &mut Value) -> Option<String> {
     match value {
         Value::Mapping(mapping) => {
-            if let Some(found) = mapping.remove("template") {
-                let cloned = found.clone();
-                if let Value::String(string) = cloned {
-                    Some(string)
-                } else {
-                    None
-                }
+            if let Some(Value::String(string)) = mapping.remove("template") {
+                Some(string)
             } else {
                 None
             }
@@ -121,7 +115,7 @@ mod test {
 
         let expected = "found".to_string();
 
-        assert_eq!(extracted, extracted);
+        assert_eq!(extracted, expected);
 
         let mut expected_value = Mapping::new();
         expected_value.insert("still_there".into(), "junk".into());

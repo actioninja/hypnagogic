@@ -149,13 +149,6 @@ fn main() -> Result<()> {
         }
     }
 
-    /*
-    let output_path = Path::new(&output);
-    if !output_path.is_dir() {
-        fs::create_dir_all(output_path)?;
-    }
-     */
-
     if !dont_wait {
         dont_disappear::any_key_to_continue::default();
     }

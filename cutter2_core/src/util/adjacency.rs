@@ -3,6 +3,7 @@ use bitflags::bitflags;
 use serde::{Deserialize, Serialize};
 
 bitflags! {
+    #[allow(clippy::unsafe_derive_deserialize)]
     #[derive(Serialize, Deserialize)]
     pub struct Adjacency: u8 {
         const N = 0b0000_0001;
@@ -43,6 +44,9 @@ impl Adjacency {
         [Adjacency::S, Adjacency::N, Adjacency::E, Adjacency::W]
     }
 
+    /// Gets the sides for a given corner adjacency
+    /// # Panics
+    /// Panics when a non-corner adjacency is passed in
     #[must_use]
     pub const fn corner_sides(self) -> (Adjacency, Adjacency) {
         match self {

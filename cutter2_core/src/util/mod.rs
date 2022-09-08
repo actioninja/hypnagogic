@@ -29,7 +29,6 @@ pub(crate) fn deep_merge_yaml(first: &mut Value, second: Value) {
 #[cfg(test)]
 mod test {
     use super::*;
-    use serde_yaml::Mapping;
 
     #[test]
     fn deep_merge_test_simple() {

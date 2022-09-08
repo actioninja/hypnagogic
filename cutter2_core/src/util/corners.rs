@@ -15,10 +15,12 @@ pub enum Side {
 }
 
 impl Side {
+    #[must_use]
     pub fn dmi_cardinals() -> [Self; 4] {
         [Self::South, Self::North, Self::East, Self::West]
     }
 
+    #[must_use]
     pub const fn is_vertical(self) -> bool {
         match self {
             Self::North | Self::South => true,

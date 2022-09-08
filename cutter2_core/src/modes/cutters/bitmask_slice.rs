@@ -37,6 +37,7 @@ pub struct SideSpacing {
 }
 
 impl SideSpacing {
+    #[must_use]
     pub fn step(self) -> u32 {
         self.end - self.start
     }
@@ -137,7 +138,7 @@ impl CutterModeConfig for BitmaskSlice {
         };
 
         //First phase: generate icons
-        let assembled = self.generate_icons(&corners, prefabs, num_frames, possible_states);
+        let assembled = self.generate_icons(&corners, &prefabs, num_frames, possible_states);
 
         // Second phase: map to byond icon states and produce dirs if need
         // Even though this is the same loop as above, all states need to be generated first for the
@@ -203,7 +204,7 @@ impl CutterModeConfig for BitmaskSlice {
             let vertical = self.get_side_info(vertical);
             trace!(corner = ?corner, horizontal = ?horizontal, vertical = ?vertical, "Starting corner");
             for (corner_type, vec) in map.iter() {
-                let position = (*self.positions.get(corner_type).unwrap());
+                let position = *self.positions.get(corner_type).unwrap();
                 let frame = vec.get(0).unwrap();
                 frame.save(format!("junk/{corner:?}-{corner_type:?}.png"))?;
                 imageops::replace(
@@ -309,7 +310,7 @@ impl BitmaskSlice {
     pub fn generate_icons(
         &self,
         corners: &Corners,
-        prefabs: Prefabs,
+        prefabs: &Prefabs,
         num_frames: u32,
         possible_states: usize,
     ) -> HashMap<Adjacency, Vec<DynamicImage>> {

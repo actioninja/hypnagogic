@@ -2,7 +2,6 @@ use crate::modes::cutters::bitmask_slice::{
     BitmaskSlice, SideSpacing, SIZE_OF_CARDINALS, SIZE_OF_DIAGONALS,
 };
 use crate::modes::CutterModeConfig;
-use crate::util::adjacency::Adjacency;
 use crate::util::corners::Side;
 use dmi::icon::{Icon, IconState};
 use fixed_map::Map;
@@ -37,7 +36,7 @@ impl CutterModeConfig for BitmaskDirectionalVis {
 
         let assembled = self.bitmask_slice_config.generate_icons(
             &corners,
-            prefabs,
+            &prefabs,
             num_frames,
             possible_states,
         );
@@ -100,11 +99,15 @@ impl CutterModeConfig for BitmaskDirectionalVis {
     }
 
     fn debug_output<R: BufRead + Seek>(&self, input: &mut R) -> anyhow::Result<DynamicImage> {
-        todo!()
+        self.bitmask_slice_config.debug_output(input)
     }
 }
 
 impl BitmaskDirectionalVis {
+    /// Gets the side cutter info for a given side based on the slice point
+    /// # Panics
+    /// Can panic if the `slice_point` map is unpopulated, which shouldn't happen if initialized correctly
+    #[must_use]
     pub fn get_side_cuts(&self, side: Side) -> SideSpacing {
         match side {
             Side::North => SideSpacing {
