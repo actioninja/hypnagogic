@@ -29,6 +29,9 @@ struct Args {
     /// Output directory of folders
     #[clap(short, long, value_parser)]
     output: Option<String>,
+    /// Location of the templates folder, defaults to "templates"
+    #[clap(short, long, value_parser, default_value_t = String::from("templates"))]
+    templates: String,
     /// Input directory/file
     #[clap(value_parser)]
     input: String,
@@ -42,6 +45,7 @@ fn main() -> Result<()> {
         debug,
         dont_wait,
         output,
+        templates,
         input,
     } = args;
 
@@ -83,13 +87,16 @@ fn main() -> Result<()> {
             .collect()
     };
 
+    let num_files = files_to_process.len();
+    println!("Found {} files!", num_files);
+
     for path in files_to_process {
         info!(path = ?path, "Found yaml at path");
         let in_file_yaml = File::open(path.as_path())?;
         let mut in_yaml_reader = BufReader::new(in_file_yaml);
         let config = Config::load(
             &mut in_yaml_reader,
-            FileResolver::new(Path::new("templates"))?,
+            FileResolver::new(Path::new(&templates))?,
         )?;
         let mut in_img_path = path.clone();
         in_img_path.set_extension("png");
@@ -148,6 +155,8 @@ fn main() -> Result<()> {
             icon.save(&mut file)?;
         }
     }
+
+    println!("Successfully processed {} files!", num_files);
 
     if !dont_wait {
         dont_disappear::any_key_to_continue::default();
