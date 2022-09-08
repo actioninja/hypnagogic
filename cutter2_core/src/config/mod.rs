@@ -19,8 +19,6 @@ pub struct CornersData<T> {
     pub southwest: T,
 }
 
-impl<T> CornersData<T> {}
-
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct Config {
     #[serde(skip_serializing_if = "Option::is_none")]
