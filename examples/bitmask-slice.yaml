@@ -1,0 +1,59 @@
+# Prefix to prepend to the front of generated files
+# OPTIONAL: This field can be entirely omitted to not prefix anything!
+file_prefix: GENERATED-
+# Bitmask Slice mode rough explanation:
+# "Bitmask Smoothing" is a style of smoothing icons where adjacent tiles are checked and use as
+# bitflags to produce a number, which is then used as a key to pick which icon to display
+# See this article if you're still confused:
+# https://gamedevelopment.tutsplus.com/tutorials/how-to-use-tile-bitmasking-to-auto-tile-your-level-layouts--cms-25673
+# Bitmask Slice generates icons to be used for this style of smoothing
+# It does this via cutting "corners" out of the input icons, which are then used to assemble
+# all possible states. Four (or five) types of corners are needed, and then it picks which corner
+# to use based on the adjacency.
+# If any fields are confusing, see visual_ex-bitmask for visual references of some values!
+mode: !BitmaskSlice
+  # Size of the input icons. Represents what size each "block" will be before cutting
+  icon_size_x: 32
+  icon_size_y: 32
+  # Output position of generated icons. Can be used to create icons that have a "padding" around
+  # them.
+  # Counted from top left as origin, with y positive being "down"
+  output_icon_pos_x: 0
+  output_icon_pos_y: 0
+  # Size of the output icons that will be used in the out DMI
+  # Most of the time this can be the same as icon_size, but you may want ot change it for things like
+  # padding or cutting one icon into multiple outputs
+  output_icon_size_x: 32
+  output_icon_size_y: 32
+  # Defines the "positions" of the corner sources or "blocks"
+  # Each "block" consists of one type of corner, see visual-ex-bitmask.png for visual reference.
+  positions:
+    # Represents "outer" corners.
+    # Used on a corner if both sides are missing adjacency
+    # Something with no adjacency will solely consist of convex corners
+    convex: 0
+    # Represents "inner" corners
+    # Used on a corner if both sides have adjacency
+    # Something with all cardinals adjacent will solely consist of concave corners
+    concave: 1
+    # Represents "horizontal" corners
+    # Something with only the "west" and "east" cardinals filled would solely consist of horizontal corners
+    horizontal: 2
+    # Represents "vertical" corners
+    # Something with only the "north" and "south" cardinals filled would solely consist of vertical corners
+    vertical: 3
+    # Represents the "flat" top section of diagonal smoothed falls
+    # Something with *all* directions adjacent will solely consist of flat corners
+    # REQUIRED IF USING is_diagonal
+    flat: 4
+  # The "split point" of where to cut corners.
+  # Since you may want to have different sized corners for icon styles where the "top" is off center
+  # this allows you to reposition it.
+  #16, 16 means the "split point" is dead center, with each corner being the 16x16 region.
+  cut_position_x: 16
+  cut_position_y: 16
+  # Produces rotated icons as dir sets, potentially useful for servers that wish to implement
+  # client.view
+  produce_dirs: false
+  # Whether diagonal adjacency should be checked
+  is_diagonal: false
