@@ -26,10 +26,10 @@ struct Args {
     /// Doesn't wait for a keypress after running. For CI or toolchain usage.
     #[clap(short = 'w', long, value_parser)]
     dont_wait: bool,
-    /// Output directory of folders
+    /// Output directory of folders. If not set, output will match the file tree and output adjacent to input
     #[clap(short, long, value_parser)]
     output: Option<String>,
-    /// Location of the templates folder, defaults to "templates"
+    /// Location of the templates folder
     #[clap(short, long, value_parser, default_value_t = String::from("templates"))]
     templates: String,
     /// Input directory/file
