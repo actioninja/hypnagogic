@@ -173,7 +173,7 @@ mod test {
     mod config_templates {
         use super::*;
         use crate::config::resolve_templates;
-        use serde_yaml::{Mapping, Value};
+        use serde_yaml::Value;
 
         #[test]
         fn flattening_simple() {
