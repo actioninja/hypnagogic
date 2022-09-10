@@ -126,50 +126,47 @@ mod test {
 
     impl TemplateResolver for TestResolver {
         fn resolve(&self, input: &str) -> Result<Value> {
-            let mut map1 = Mapping::new();
-            map1.insert("template".into(), "second".into());
+            let first_string = "---
+                template: second
+                second: 2
+                third: 2
+            ";
 
-            map1.insert("second".into(), 2.into());
-            map1.insert("third".into(), 2.into());
+            let second_string = "---
+                first: 3
+                second: 3
+                third: 3
+                fourth: 3
+            ";
 
-            let mut map2 = Mapping::new();
-            map2.insert("template".into(), Value::Null);
+            let fourth_string = "---
+                template: fifth
+                first: 4
+                second: 4
+                third: 4
+                inner:
+                    inner1: 4
+                    inner2: 4
+            ";
 
-            map2.insert("first".into(), 3.into());
-            map2.insert("second".into(), 3.into());
-            map2.insert("third".into(), 3.into());
-            map2.insert("fourth".into(), 3.into());
+            let fifth_string = "---
+                first: 5
+                second: 5
+                third: 5
+                inner:
+                    inner1: 5
+                    inner2: 5
+                    inner3: 5
+            ";
 
-            let mut map4 = Mapping::new();
-            map4.insert("template".into(), "fifth".into());
-
-            map4.insert("first".into(), 4.into());
-            map4.insert("second".into(), 4.into());
-            map4.insert("third".into(), 4.into());
-            let mut inner_map4 = Mapping::new();
-            inner_map4.insert("inner1".into(), 4.into());
-            inner_map4.insert("inner2".into(), 4.into());
-            map4.insert("inner".into(), inner_map4.into());
-
-            let mut map5 = Mapping::new();
-            map5.insert("template".into(), Value::Null);
-
-            map5.insert("first".into(), 5.into());
-            map5.insert("second".into(), 5.into());
-            map5.insert("third".into(), 5.into());
-            let mut inner_map5 = Mapping::new();
-            inner_map5.insert("inner1".into(), 5.into());
-            inner_map5.insert("inner2".into(), 5.into());
-            inner_map5.insert("inner3".into(), 5.into());
-            map5.insert("inner".into(), inner_map5.into());
-
-            match input {
-                "first" => Ok(map1.into()),
-                "second" => Ok(map2.into()),
-                "fourth" => Ok(map4.into()),
-                "fifth" => Ok(map5.into()),
+            Ok(serde_yaml::from_str(match input {
+                "first" => first_string,
+                "second" => second_string,
+                "fourth" => fourth_string,
+                "fifth" => fifth_string,
                 _ => panic!("Malformed test"),
-            }
+            })
+            .unwrap())
         }
     }
 
@@ -180,47 +177,49 @@ mod test {
 
         #[test]
         fn flattening_simple() {
-            let mut map = Mapping::new();
-            map.insert("template".into(), "first".into());
+            let input_string = "---
+                template: first
+                first: 1
+                second: 1
+            ";
+            let input: Value = serde_yaml::from_str(input_string).unwrap();
 
-            map.insert("first".into(), 1.into());
-            map.insert("second".into(), 1.into());
+            let result = resolve_templates(input, TestResolver).unwrap();
 
-            let result = resolve_templates(map.into(), TestResolver).unwrap();
-            let mut expected = Mapping::new();
-            expected.insert("first".into(), 1.into());
-            expected.insert("second".into(), 1.into());
-            expected.insert("third".into(), 2.into());
-            expected.insert("fourth".into(), 3.into());
-            let value: Value = expected.into();
-            assert_eq!(result, value);
+            let expected_string = "---
+                first: 1
+                second: 1
+                third: 2
+                fourth: 3
+            ";
+            let expected: Value = serde_yaml::from_str(expected_string).unwrap();
+            assert_eq!(result, expected);
         }
 
         #[test]
         fn flattening_complex() {
-            let mut map = Mapping::new();
-            map.insert("template".into(), "fourth".into());
+            let input_string = "---
+                template: fourth
+                first: 1
+                second: 1
+                inner:
+                    inner1: 1
+            ";
 
-            map.insert("first".into(), 1.into());
-            map.insert("second".into(), 1.into());
-            let mut inner_map = Mapping::new();
-            inner_map.insert("inner1".into(), 1.into());
+            let input: Value = serde_yaml::from_str(input_string).unwrap();
 
-            map.insert("inner".into(), inner_map.into());
+            let result = resolve_templates(input, TestResolver).unwrap();
 
-            let result = resolve_templates(map.into(), TestResolver).unwrap();
-
-            let mut expected = Mapping::new();
-            expected.insert("first".into(), 1.into());
-            expected.insert("second".into(), 1.into());
-            expected.insert("third".into(), 4.into());
-            let mut second_mapping = Mapping::new();
-            second_mapping.insert("inner1".into(), 1.into());
-            second_mapping.insert("inner2".into(), 4.into());
-            second_mapping.insert("inner3".into(), 5.into());
-            expected.insert("inner".into(), second_mapping.into());
-
-            let expected_value: Value = expected.into();
+            let expected_string = "---
+                first: 1
+                second: 1
+                third: 4
+                inner:
+                    inner1: 1
+                    inner2: 4
+                    inner3: 5
+            ";
+            let expected_value: Value = serde_yaml::from_str(expected_string).unwrap();
             assert_eq!(result, expected_value);
         }
     }
