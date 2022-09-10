@@ -237,7 +237,6 @@ mod test {
                 mode: BitmaskSlice::default().into(),
             };
             let config_string = serde_yaml::to_string(&config).unwrap();
-            println!("{}", config_string);
 
             let mut reader = Cursor::new(&config_string);
 
