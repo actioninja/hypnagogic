@@ -1,8 +1,8 @@
 use anyhow::Result;
 use clap::Parser;
-use cutter2_core::config::template_resolver::FileResolver;
-use cutter2_core::config::Config;
-use cutter2_core::modes::CutterModeConfig;
+use hypnagogic_core::config::template_resolver::FileResolver;
+use hypnagogic_core::config::Config;
+use hypnagogic_core::modes::CutterModeConfig;
 use image::DynamicImage;
 use std::fs;
 use std::fs::{metadata, File};

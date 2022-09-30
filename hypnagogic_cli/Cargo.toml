@@ -1,6 +1,6 @@
 [package]
-name = "cutter2-cli"
-description = "CLI Tool for cutting icons in to the DMI format"
+name = "hypnagogic-cli"
+description = "CLI Tool for processing icons in to the DMI format"
 version = "1.0.0"
 edition = "2021"
 license = "AGPL"
@@ -19,4 +19,4 @@ serde_with = "2.0"
 tracing = "0.1"
 tracing-subscriber = "0.3"
 walkdir = "2.3"
-cutter2-core = { path = "../cutter2_core" }
+hypnagogic-core = { path = "../hypnagogic_core" }
