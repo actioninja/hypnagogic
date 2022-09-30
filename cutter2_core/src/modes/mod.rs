@@ -24,7 +24,7 @@ pub trait CutterModeConfig {
 }
 
 #[enum_dispatch(CutterModeConfig)]
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug)]
+#[derive(Clone, PartialEq, Serialize, Deserialize, Debug)]
 pub enum CutterMode {
     BitmaskSlice,
     BitmaskDirectionalVis,

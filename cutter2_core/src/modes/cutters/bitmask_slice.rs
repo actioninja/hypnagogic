@@ -43,7 +43,7 @@ impl SideSpacing {
     }
 }
 
-#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct BitmaskSlice {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(default)]

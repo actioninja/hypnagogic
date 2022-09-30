@@ -9,7 +9,7 @@ use image::{imageops, DynamicImage, GenericImageView, ImageFormat};
 use serde::{Deserialize, Serialize};
 use std::io::{BufRead, Seek};
 
-#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct BitmaskDirectionalVis {
     #[serde(flatten)]
     pub bitmask_slice_config: BitmaskSlice,
