@@ -1,7 +1,7 @@
 pub mod error;
 pub mod template_resolver;
 
-use crate::config::error::{ConfigError, ConfigResult};
+use crate::config::error::ConfigResult;
 use crate::config::template_resolver::error::TemplateResult;
 use crate::modes::CutterMode;
 use crate::util::deep_merge_yaml;
@@ -34,7 +34,10 @@ impl Config {
     /// # Errors
     /// Returns an error if serde fails to load from the reader
     #[tracing::instrument(skip(resolver, input))]
-    pub fn load<R: Read + Seek>(input: &mut R, resolver: impl TemplateResolver) -> ConfigResult<Config> {
+    pub fn load<R: Read + Seek>(
+        input: &mut R,
+        resolver: impl TemplateResolver,
+    ) -> ConfigResult<Config> {
         let config = serde_yaml::from_reader(input)?;
 
         let result_value = resolve_templates(config, resolver)?;

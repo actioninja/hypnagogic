@@ -22,7 +22,7 @@ impl FileResolver {
     /// Returns an error if `path` does not exist.
     pub fn new(path: &Path) -> ConfigResult<Self> {
         let pathbuf =
-            fs::canonicalize(path).map_err(|e| ConfigError::NoTemplateDir(path.to_path_buf()))?;
+            fs::canonicalize(path).map_err(|_e| ConfigError::NoTemplateDir(path.to_path_buf()))?;
         Ok(FileResolver { path: pathbuf })
     }
 }

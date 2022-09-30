@@ -1,7 +1,7 @@
 use crate::modes::cutters::bitmask_slice::{
     BitmaskSlice, SideSpacing, SIZE_OF_CARDINALS, SIZE_OF_DIAGONALS,
 };
-use crate::modes::error::{ProcessorError, ProcessorResult};
+use crate::modes::error::ProcessorResult;
 use crate::modes::CutterModeConfig;
 use crate::util::corners::Side;
 use dmi::icon::{Icon, IconState};
