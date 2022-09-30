@@ -42,12 +42,21 @@ impl CutterModeConfig for BitmaskDirectionalVis {
             possible_states,
         );
 
+        // fairly gnarly iterator chain; loops delay sequence and then takes number of frames
+        let delay: Option<Vec<f32>> = self.bitmask_slice_config.delay.clone().map(|inner| {
+            inner
+                .iter()
+                .cycle()
+                .take(num_frames as usize)
+                .copied()
+                .collect()
+        });
+
         let mut icon_states = vec![];
 
         for (adjacency, images) in assembled {
-            let mut icon_state_frames = vec![];
-
             for side in Side::dmi_cardinals() {
+                let mut icon_state_frames = vec![];
                 let slice_info = self.get_side_cuts(side);
 
                 let (x, y, width, height) = if side.is_vertical() {
@@ -77,17 +86,16 @@ impl CutterModeConfig for BitmaskDirectionalVis {
                     imageops::overlay(&mut cut_img, &crop, x as i64, y as i64);
                     icon_state_frames.push(cut_img);
                 }
+                icon_states.push(IconState {
+                    name: format!("{}-{}", adjacency.bits(), side.byond_dir()),
+
+                    dirs: 1,
+                    frames: num_frames,
+                    images: icon_state_frames,
+                    delay: delay.clone(),
+                    ..Default::default()
+                });
             }
-
-            icon_states.push(IconState {
-                name: format!("{}", adjacency.bits()),
-
-                dirs: 4,
-                frames: num_frames,
-                images: icon_state_frames,
-                delay: None,
-                ..Default::default()
-            });
         }
 
         let out_icon = Icon {

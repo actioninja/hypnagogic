@@ -15,6 +15,15 @@ pub enum Side {
 }
 
 impl Side {
+    pub fn byond_dir(&self) -> u8 {
+        match self {
+            Side::North => 0b0000_0001,
+            Side::South => 0b0000_0010,
+            Side::East => 0b0000_0100,
+            Side::West => 0b0000_1000,
+        }
+    }
+
     #[must_use]
     pub fn dmi_cardinals() -> [Self; 4] {
         [Self::South, Self::North, Self::East, Self::West]
