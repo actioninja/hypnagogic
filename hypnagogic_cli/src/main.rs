@@ -4,6 +4,7 @@ use hypnagogic_core::config::template_resolver::file_resolver::FileResolver;
 use hypnagogic_core::config::Config;
 use hypnagogic_core::modes::CutterModeConfig;
 use image::DynamicImage;
+use rayon::prelude::*;
 use std::fs;
 use std::fs::{metadata, File};
 use std::io::BufReader;
@@ -37,6 +38,8 @@ struct Args {
     input: String,
 }
 
+//todo: this wasn't working anywhere else
+#[allow(unused_must_use)]
 fn main() -> Result<()> {
     let args = Args::parse();
     let Args {
@@ -90,75 +93,9 @@ fn main() -> Result<()> {
     let num_files = files_to_process.len();
     println!("Found {} files!", num_files);
 
-    for path in files_to_process {
-        info!(path = ?path, "Found yaml at path");
-        let in_file_yaml = File::open(path.as_path())?;
-        let mut in_yaml_reader = BufReader::new(in_file_yaml);
-        let config = Config::load(
-            &mut in_yaml_reader,
-            FileResolver::new(Path::new(&templates))?,
-        )?;
-        let mut in_img_path = path.clone();
-        in_img_path.set_extension("png");
-        let in_img_file = File::open(in_img_path.as_path())?;
-        let mut in_img_reader = BufReader::new(in_img_file.try_clone()?);
-
-        let out = config.mode.perform_operation(&mut in_img_reader)?;
-
-        if let Some(output) = &output {
-            let output_path = Path::new(output);
-            fs::create_dir_all(output_path)?;
-        }
-
-        let process_path = |path: &mut PathBuf| {
-            if flatten {
-                let file_name = path.file_name().map(|s| s.to_os_string()).unwrap();
-                path.clear();
-                path.push(file_name);
-            }
-
-            if let Some(output) = &output {
-                let buf = PathBuf::from(output).join(&path);
-                path.clear();
-                path.push(buf);
-            }
-        };
-
-        if debug {
-            let in_img_file = File::open(in_img_path.as_path())?;
-            let mut debug_reader = BufReader::new(in_img_file);
-            let debug_out: DynamicImage = config.mode.debug_output(&mut debug_reader)?;
-            let mut debug_path = in_img_path.clone();
-            debug_path.set_extension("");
-            let current_file_name = debug_path.file_name().unwrap().to_str().unwrap();
-            debug_path.set_file_name(format!("{current_file_name}-DEBUGOUT"));
-            debug_path.set_extension("png");
-
-            process_path(&mut debug_path);
-
-            info!(path = ?debug_path, "Writing debug");
-            debug_out.save(debug_path)?
-        }
-
-        let prefix = config.file_prefix.unwrap_or_else(|| "".to_string());
-        for (name_hint, icon) in out {
-            let mut new_path = in_img_path.clone();
-            let current_file_name = new_path.file_name().unwrap().to_str().unwrap();
-            new_path.set_file_name(format!("{prefix}{current_file_name}{name_hint}"));
-            new_path.set_extension("dmi");
-            info!(path = ?new_path, "Writing output");
-
-            process_path(&mut new_path);
-
-            let parent_dir = new_path.parent().expect("Failed to get parent? (this is a program error, not a config error! Please report!)");
-
-            fs::create_dir_all(parent_dir).expect("Failed to create dirs (This is a program error, not a config error! Please report!");
-
-            let mut file = File::create(new_path).expect("Failed to create output file (This is a program error, not a config error! Please report!)");
-
-            icon.save(&mut file)?;
-        }
-    }
+    files_to_process
+        .par_iter()
+        .try_for_each(|path| process_icon(flatten, debug, &output, &templates, path));
 
     println!("Successfully processed {} files!", num_files);
 
@@ -166,5 +103,87 @@ fn main() -> Result<()> {
         dont_disappear::any_key_to_continue::default();
     }
 
+    Ok(())
+}
+
+/// Gnarly, effectful function hoisted out here so that I can still use ? but parallelize with rayon
+fn process_icon(
+    flatten: bool,
+    debug: bool,
+    output: &Option<String>,
+    templates: &String,
+    path: &PathBuf,
+) -> Result<(), anyhow::Error> {
+    info!(path = ?path, "Found yaml at path");
+    let in_file_yaml = File::open(path.as_path())?;
+    let mut in_yaml_reader = BufReader::new(in_file_yaml);
+    let config = Config::load(
+        &mut in_yaml_reader,
+        FileResolver::new(Path::new(&templates))?,
+    )?;
+    let mut in_img_path = path.clone();
+    in_img_path.set_extension("png");
+    let in_img_file = File::open(in_img_path.as_path())?;
+    let mut in_img_reader = BufReader::new(in_img_file.try_clone()?);
+
+    let out = config.mode.perform_operation(&mut in_img_reader)?;
+
+    if let Some(output) = &output {
+        let output_path = Path::new(output);
+        fs::create_dir_all(output_path)?;
+    }
+
+    let process_path = |path: &mut PathBuf| {
+        if flatten {
+            let file_name = path.file_name().map(|s| s.to_os_string()).unwrap();
+            path.clear();
+            path.push(file_name);
+        }
+
+        if let Some(output) = &output {
+            let buf = PathBuf::from(output).join(&path);
+            path.clear();
+            path.push(buf);
+        }
+    };
+
+    if debug {
+        let in_img_file = File::open(in_img_path.as_path())?;
+        let mut debug_reader = BufReader::new(in_img_file);
+        let debug_out: DynamicImage = config.mode.debug_output(&mut debug_reader)?;
+        let mut debug_path = in_img_path.clone();
+        debug_path.set_extension("");
+        let current_file_name = debug_path.file_name().unwrap().to_str().unwrap();
+        debug_path.set_file_name(format!("{current_file_name}-DEBUGOUT"));
+        debug_path.set_extension("png");
+
+        process_path(&mut debug_path);
+
+        info!(path = ?debug_path, "Writing debug");
+        debug_out.save(debug_path)?
+    }
+
+    let prefix = config.file_prefix.unwrap_or_else(|| "".to_string());
+    for (name_hint, icon) in out {
+        let mut new_path = in_img_path.clone();
+        let current_file_name = new_path.file_name().unwrap().to_str().unwrap();
+        new_path.set_file_name(format!("{prefix}{current_file_name}{name_hint}"));
+        new_path.set_extension("dmi");
+        info!(path = ?new_path, "Writing output");
+
+        process_path(&mut new_path);
+
+        let parent_dir = new_path.parent().expect(
+            "Failed to get parent? (this is a program error, not a config error! Please report!)",
+        );
+
+        fs::create_dir_all(parent_dir).expect(
+            "Failed to create dirs (This is a program error, not a config error! Please report!",
+        );
+
+        let mut file = File::create(new_path).expect("Failed to create output file (This is a program error, not a config error! Please report!)");
+
+        icon.save(&mut file)?;
+    }
     Ok(())
 }

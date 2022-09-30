@@ -13,6 +13,7 @@ clap = { version = "3.1", features = ["color", "suggestions", "deprecated", "der
 dmi = "0.1"
 dont_disappear = "3.0"
 image = "0.24"
+rayon = "1.5"
 serde = "1.0"
 serde_yaml = "0.9"
 serde_with = "2.0"

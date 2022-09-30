@@ -641,6 +641,7 @@ dependencies = [
  "dont_disappear",
  "hypnagogic-core",
  "image 0.24.4",
+ "rayon",
  "serde",
  "serde_with",
  "serde_yaml",
