@@ -1,9 +1,9 @@
-# Cutter2
+# Hypnagogic
 ### A multipurpose icon processing tool for byond
 
 ## Configuration
 
-Cutter2 needs configuration to operate on! 
+Hypnagogic needs configuration to operate on! 
 
 Configuration is as simple as creating a .yaml file with the same name
 
@@ -16,11 +16,11 @@ Some basic templates are offered in `templates` for various common scenarios.
 
 Basic usage is as simple as
 
-`cutter2 input_dir`
+`hypnagogic input_dir`
 
 This will deep search the directory for .yaml/yml files and attempt to perform an operation
 on files with matching names.
 
-Cutter2 offers a command line help tool! See it for possible command line flags
+Hypnagogic offers a command line help tool! See it for possible command line flags
 
-`cutter2 -help`
+`hypnagogic -help`

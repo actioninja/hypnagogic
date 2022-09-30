@@ -19,4 +19,4 @@ serde_with = "2.0"
 tracing = "0.1"
 tracing-subscriber = "0.3"
 walkdir = "2.3"
-cutter2-core = { path = "../cutter2_core" }
+cutter2-core = { path = "../hypnagogic_core" }
