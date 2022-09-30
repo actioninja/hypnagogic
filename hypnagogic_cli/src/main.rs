@@ -1,6 +1,6 @@
 use anyhow::Result;
 use clap::Parser;
-use hypnagogic_core::config::template_resolver::FileResolver;
+use hypnagogic_core::config::template_resolver::file_resolver::FileResolver;
 use hypnagogic_core::config::Config;
 use hypnagogic_core::modes::CutterModeConfig;
 use image::DynamicImage;
@@ -150,7 +150,11 @@ fn main() -> Result<()> {
 
             process_path(&mut new_path);
 
-            let mut file = File::create(new_path)?;
+            let parent_dir = new_path.parent().expect("Failed to get parent? (this is a program error, not a config error! Please report!)");
+
+            fs::create_dir_all(parent_dir).expect("Failed to create dirs (This is a program error, not a config error! Please report!");
+
+            let mut file = File::create(new_path).expect("Failed to create output file (This is a program error, not a config error! Please report!)");
 
             icon.save(&mut file)?;
         }

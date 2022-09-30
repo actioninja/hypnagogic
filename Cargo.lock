@@ -628,7 +628,6 @@ dependencies = [
 name = "hypnagogic-core"
 version = "1.0.0"
 dependencies = [
- "anyhow",
  "bitflags",
  "derive_more",
  "dmi 0.1.4",

@@ -18,5 +18,5 @@ mode: !BitmaskDirectionalVis
   slice_point:
     west: 4
     north: 16
-    south: 20
+    south: 16
     east: 28

@@ -1,5 +1,4 @@
 use crate::util::adjacency::Adjacency;
-use anyhow::Result;
 use dmi::icon::{Icon, IconState};
 use enum_iterator::all;
 use fixed_map::Map;
@@ -10,6 +9,7 @@ use std::collections::HashMap;
 use std::io::{BufRead, Seek};
 use tracing::{debug, trace};
 
+use crate::modes::error::ProcessorResult;
 use crate::modes::CutterModeConfig;
 use crate::util::corners::{Corner, CornerType, Side};
 
@@ -117,7 +117,10 @@ impl Default for BitmaskSlice {
 
 impl CutterModeConfig for BitmaskSlice {
     #[tracing::instrument(skip(input))]
-    fn perform_operation<R: BufRead + Seek>(&self, input: &mut R) -> Result<Vec<(String, Icon)>> {
+    fn perform_operation<R: BufRead + Seek>(
+        &self,
+        input: &mut R,
+    ) -> ProcessorResult<Vec<(String, Icon)>> {
         debug!("Starting icon op");
         let mut img = image::load(input, ImageFormat::Png)?;
         let (corners, prefabs) = self.generate_corners(&mut img)?;
@@ -187,7 +190,7 @@ impl CutterModeConfig for BitmaskSlice {
     }
 
     #[tracing::instrument(skip(input))]
-    fn debug_output<R: BufRead + Seek>(&self, input: &mut R) -> Result<DynamicImage> {
+    fn debug_output<R: BufRead + Seek>(&self, input: &mut R) -> ProcessorResult<DynamicImage> {
         debug!("Starting debug output");
         let mut img = image::load(input, ImageFormat::Png)?;
         let (corners, _prefabs) = self.generate_corners(&mut img)?;
@@ -235,7 +238,7 @@ impl BitmaskSlice {
     /// # Panics
     /// Shouldn't panic
     #[tracing::instrument(skip(img))]
-    pub fn generate_corners(&self, img: &mut DynamicImage) -> Result<(Corners, Prefabs)> {
+    pub fn generate_corners(&self, img: &mut DynamicImage) -> ProcessorResult<(Corners, Prefabs)> {
         let (_width, height) = img.dimensions();
 
         let num_frames = height / self.icon_size_y;

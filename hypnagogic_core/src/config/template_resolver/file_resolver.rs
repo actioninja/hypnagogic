@@ -1,30 +1,14 @@
-use anyhow::Result;
-use serde_yaml::Value;
+use crate::config::error::{ConfigError, ConfigResult};
+use crate::config::template_resolver::error::TemplateError;
+use crate::config::template_resolver::TemplateResolver;
+use core::default::Default;
+use core::result::Result::{Err, Ok};
+use serde_yaml::value::Value;
 use std::fs;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
-use thiserror::Error;
 use tracing::{debug, trace};
-
-pub trait TemplateResolver {
-    /// Determines how exactly to resolve template strings. Primarily for the ability to manually
-    /// pass them in without accessing FS in tests
-    /// # Errors
-    /// Throws an error if resolution fails
-    fn resolve(&self, input: &str) -> Result<Value>;
-}
-
-/// Simple resolver that always returns default templatedconfig
-/// For testing or otherwise situations where you want to not actually do resolution
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
-pub struct NullResolver;
-
-impl TemplateResolver for NullResolver {
-    fn resolve(&self, _: &str) -> Result<Value> {
-        Ok(Value::default())
-    }
-}
 
 /// Loads templates from a folder on the filesystem.
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -36,8 +20,9 @@ impl FileResolver {
     /// Creates a new `FileResolver` with the given path
     /// # Errors
     /// Returns an error if `path` does not exist.
-    pub fn new(path: &Path) -> Result<Self> {
-        let pathbuf = fs::canonicalize(path)?;
+    pub fn new(path: &Path) -> ConfigResult<Self> {
+        let pathbuf =
+            fs::canonicalize(path).map_err(|e| ConfigError::NoTemplateDir(path.to_path_buf()))?;
         Ok(FileResolver { path: pathbuf })
     }
 }
@@ -48,15 +33,9 @@ impl Default for FileResolver {
     }
 }
 
-#[derive(Error, Debug)]
-pub enum FileResolverError {
-    #[error("Template not found: {0:?}")]
-    TemplateNotFound(PathBuf),
-}
-
 impl TemplateResolver for FileResolver {
     #[tracing::instrument(skip(input))]
-    fn resolve(&self, input: &str) -> Result<Value> {
+    fn resolve(&self, input: &str) -> Result<Value, TemplateError> {
         let mut pathbuf = self.path.clone();
         pathbuf.push(Path::new(input));
 
@@ -70,7 +49,9 @@ impl TemplateResolver for FileResolver {
         } else if yml_path.exists() {
             yml_path
         } else {
-            return Err(FileResolverError::TemplateNotFound(pathbuf).into());
+            return Err(TemplateError::FailedToFindTemplate(format!(
+                "Template `{input}` does not exist"
+            )));
         };
 
         trace!("Found template at {:?}", pathbuf);

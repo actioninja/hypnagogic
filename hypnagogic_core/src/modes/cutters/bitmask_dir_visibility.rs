@@ -1,6 +1,7 @@
 use crate::modes::cutters::bitmask_slice::{
     BitmaskSlice, SideSpacing, SIZE_OF_CARDINALS, SIZE_OF_DIAGONALS,
 };
+use crate::modes::error::{ProcessorError, ProcessorResult};
 use crate::modes::CutterModeConfig;
 use crate::util::corners::Side;
 use dmi::icon::{Icon, IconState};
@@ -21,7 +22,7 @@ impl CutterModeConfig for BitmaskDirectionalVis {
     fn perform_operation<R: BufRead + Seek>(
         &self,
         input: &mut R,
-    ) -> anyhow::Result<Vec<(String, Icon)>> {
+    ) -> ProcessorResult<Vec<(String, Icon)>> {
         let mut img = image::load(input, ImageFormat::Png)?;
         let (corners, prefabs) = self.bitmask_slice_config.generate_corners(&mut img)?;
 
@@ -98,7 +99,7 @@ impl CutterModeConfig for BitmaskDirectionalVis {
         Ok(vec![("".to_string(), out_icon)])
     }
 
-    fn debug_output<R: BufRead + Seek>(&self, input: &mut R) -> anyhow::Result<DynamicImage> {
+    fn debug_output<R: BufRead + Seek>(&self, input: &mut R) -> ProcessorResult<DynamicImage> {
         self.bitmask_slice_config.debug_output(input)
     }
 }

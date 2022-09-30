@@ -1,8 +1,10 @@
+pub mod error;
 pub mod template_resolver;
 
+use crate::config::error::{ConfigError, ConfigResult};
+use crate::config::template_resolver::error::TemplateResult;
 use crate::modes::CutterMode;
 use crate::util::deep_merge_yaml;
-use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use serde_yaml::{Mapping, Value};
 use std::io::{Read, Seek};
@@ -28,11 +30,11 @@ pub struct Config {
 }
 
 impl Config {
-    /// Load a config from a reader and provide a collapsed, template resolved back.
+    /// Load a config from a reader and provide a collapsed, template resolved config back.
     /// # Errors
     /// Returns an error if serde fails to load from the reader
     #[tracing::instrument(skip(resolver, input))]
-    pub fn load<R: Read + Seek>(input: &mut R, resolver: impl TemplateResolver) -> Result<Self> {
+    pub fn load<R: Read + Seek>(input: &mut R, resolver: impl TemplateResolver) -> ConfigResult<Config> {
         let config = serde_yaml::from_reader(input)?;
 
         let result_value = resolve_templates(config, resolver)?;
@@ -43,8 +45,8 @@ impl Config {
     }
 }
 
-/// Seeks out template string from a value and returns it as a Some(String)
-/// If not found, returns none
+/// Seeks out template string from a value and returns it as a `Some(String)`
+/// If not found, returns `None`
 /// SIDE EFFECT: removes it from the `Value` if it finds it!
 fn extract_template_string(value: &mut Value) -> Option<String> {
     match value {
@@ -60,7 +62,7 @@ fn extract_template_string(value: &mut Value) -> Option<String> {
 }
 
 #[tracing::instrument(skip(resolver))]
-pub fn resolve_templates(first: Value, resolver: impl TemplateResolver) -> Result<Value> {
+pub fn resolve_templates(first: Value, resolver: impl TemplateResolver) -> TemplateResult {
     debug!(first = ?first, "Started resolving templates");
     let mut current = first;
     let mut stack: Vec<Value> = vec![];
@@ -74,9 +76,9 @@ pub fn resolve_templates(first: Value, resolver: impl TemplateResolver) -> Resul
     //Drill in to templates and resolve until no new ones found
     while recursion_cap < 100 {
         if let Some(template) = &extracted_template {
-            current = resolver.resolve(template)?;
+            current = resolver.resolve(template.as_str())?;
             extracted_template = extract_template_string(&mut current);
-            trace!("Resolved config: {:?}", current);
+            trace!(value = ?current, "Resolved config");
             stack.push(current.clone());
             recursion_cap += 1;
         } else {
@@ -125,7 +127,7 @@ mod test {
     struct TestResolver;
 
     impl TemplateResolver for TestResolver {
-        fn resolve(&self, input: &str) -> Result<Value> {
+        fn resolve(&self, input: &str) -> TemplateResult {
             let first_string = "---
                 template: second
                 second: 2
