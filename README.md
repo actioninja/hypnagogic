@@ -1,4 +1,5 @@
 # Hypnagogic
+/ˌhipnəˈɡäjik/ - adjective - relating to the state immediately before falling asleep.
 ### A multipurpose icon processing tool for byond
 
 ## Configuration
