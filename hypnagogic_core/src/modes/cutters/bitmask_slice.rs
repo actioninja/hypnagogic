@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use shrinkwraprs::Shrinkwrap;
 use std::collections::HashMap;
 use std::io::{BufRead, Seek};
+use std::path::PathBuf;
 use tracing::{debug, trace};
 
 use crate::modes::error::ProcessorResult;
@@ -190,7 +191,11 @@ impl CutterModeConfig for BitmaskSlice {
     }
 
     #[tracing::instrument(skip(input))]
-    fn debug_output<R: BufRead + Seek>(&self, input: &mut R) -> ProcessorResult<DynamicImage> {
+    fn debug_output<R: BufRead + Seek>(
+        &self,
+        input: &mut R,
+        output_dir: PathBuf,
+    ) -> ProcessorResult<DynamicImage> {
         debug!("Starting debug output");
         let mut img = image::load(input, ImageFormat::Png)?;
         let (corners, _prefabs) = self.generate_corners(&mut img)?;
@@ -209,7 +214,10 @@ impl CutterModeConfig for BitmaskSlice {
             for (corner_type, vec) in map.iter() {
                 let position = *self.positions.get(corner_type).unwrap();
                 let frame = vec.get(0).unwrap();
-                frame.save(format!("junk/{corner:?}-{corner_type:?}.png"))?;
+                let output_file = output_dir
+                    .as_path()
+                    .join(format!("{corner:?}-{corner_type:?}.png"));
+                frame.save(output_file)?;
                 imageops::replace(
                     &mut corners_image,
                     frame,

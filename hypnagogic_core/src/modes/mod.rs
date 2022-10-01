@@ -6,6 +6,7 @@ use enum_dispatch::enum_dispatch;
 use image::DynamicImage;
 use serde::{Deserialize, Serialize};
 use std::io::{BufRead, Seek};
+use std::path::PathBuf;
 
 pub mod cutters;
 pub mod error;
@@ -24,7 +25,11 @@ pub trait CutterModeConfig {
     /// Represents performing debug output as defined by implementor
     /// # Errors
     /// Possible errors vary based on implementor
-    fn debug_output<R: BufRead + Seek>(&self, input: &mut R) -> ProcessorResult<DynamicImage>;
+    fn debug_output<R: BufRead + Seek>(
+        &self,
+        input: &mut R,
+        output_dir: PathBuf,
+    ) -> ProcessorResult<DynamicImage>;
 }
 
 #[enum_dispatch(CutterModeConfig)]

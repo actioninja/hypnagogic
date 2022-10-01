@@ -9,6 +9,7 @@ use fixed_map::Map;
 use image::{imageops, DynamicImage, GenericImageView, ImageFormat};
 use serde::{Deserialize, Serialize};
 use std::io::{BufRead, Seek};
+use std::path::PathBuf;
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct BitmaskDirectionalVis {
@@ -107,8 +108,12 @@ impl CutterModeConfig for BitmaskDirectionalVis {
         Ok(vec![("".to_string(), out_icon)])
     }
 
-    fn debug_output<R: BufRead + Seek>(&self, input: &mut R) -> ProcessorResult<DynamicImage> {
-        self.bitmask_slice_config.debug_output(input)
+    fn debug_output<R: BufRead + Seek>(
+        &self,
+        input: &mut R,
+        output_dir: PathBuf,
+    ) -> ProcessorResult<DynamicImage> {
+        self.bitmask_slice_config.debug_output(input, output_dir)
     }
 }
 

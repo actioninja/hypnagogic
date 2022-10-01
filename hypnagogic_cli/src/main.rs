@@ -38,8 +38,6 @@ struct Args {
     input: String,
 }
 
-//todo: this wasn't working anywhere else
-#[allow(unused_must_use)]
 fn main() -> Result<()> {
     let args = Args::parse();
     let Args {
@@ -95,7 +93,7 @@ fn main() -> Result<()> {
 
     files_to_process
         .par_iter()
-        .try_for_each(|path| process_icon(flatten, debug, &output, &templates, path));
+        .try_for_each(|path| process_icon(flatten, debug, &output, &templates, path))?;
 
     println!("Successfully processed {} files!", num_files);
 
@@ -150,7 +148,13 @@ fn process_icon(
     if debug {
         let in_img_file = File::open(in_img_path.as_path())?;
         let mut debug_reader = BufReader::new(in_img_file);
-        let debug_out: DynamicImage = config.mode.debug_output(&mut debug_reader)?;
+        let mut debug_output_dir = in_img_path.parent().unwrap().to_path_buf();
+        let file_name = in_img_path.file_name().unwrap().to_str().unwrap();
+        debug_output_dir.push(Path::new(format!("{file_name}-DEBUG").as_str()));
+        fs::create_dir_all(debug_output_dir.as_path())?;
+        let debug_out: DynamicImage = config
+            .mode
+            .debug_output(&mut debug_reader, debug_output_dir)?;
         let mut debug_path = in_img_path.clone();
         debug_path.set_extension("");
         let current_file_name = debug_path.file_name().unwrap().to_str().unwrap();
