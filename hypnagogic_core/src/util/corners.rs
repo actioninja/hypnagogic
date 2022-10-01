@@ -15,7 +15,8 @@ pub enum Side {
 }
 
 impl Side {
-    pub fn byond_dir(&self) -> u8 {
+    #[must_use]
+    pub const fn byond_dir(&self) -> u8 {
         match self {
             Side::North => 0b0000_0001,
             Side::South => 0b0000_0010,
@@ -25,7 +26,7 @@ impl Side {
     }
 
     #[must_use]
-    pub fn dmi_cardinals() -> [Self; 4] {
+    pub const fn dmi_cardinals() -> [Self; 4] {
         [Self::South, Self::North, Self::East, Self::West]
     }
 
@@ -58,6 +59,12 @@ impl Corner {
             Corner::SouthWest => (Side::West, Side::South),
             Corner::NorthWest => (Side::West, Side::North),
         }
+    }
+
+    #[must_use]
+    pub const fn byond_dir(self) -> u8 {
+        let (horizontal, vertical) = self.sides_of_corner();
+        horizontal.byond_dir() | vertical.byond_dir()
     }
 }
 

@@ -145,6 +145,8 @@ fn process_icon(
         }
     };
 
+    // Real nasty code here. Lots of unwraps. Debug is only intended to be used in a dev environment,
+    // so panics are acceptable
     if debug {
         let in_img_file = File::open(in_img_path.as_path())?;
         let mut debug_reader = BufReader::new(in_img_file);

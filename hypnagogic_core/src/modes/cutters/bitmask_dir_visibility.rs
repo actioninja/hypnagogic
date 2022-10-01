@@ -3,8 +3,9 @@ use crate::modes::cutters::bitmask_slice::{
 };
 use crate::modes::error::ProcessorResult;
 use crate::modes::CutterModeConfig;
-use crate::util::corners::Side;
+use crate::util::corners::{Corner, CornerType, Side};
 use dmi::icon::{Icon, IconState};
+use enum_iterator::all;
 use fixed_map::Map;
 use image::{imageops, DynamicImage, GenericImageView, ImageFormat};
 use serde::{Deserialize, Serialize};
@@ -94,6 +95,39 @@ impl CutterModeConfig for BitmaskDirectionalVis {
                     frames: num_frames,
                     images: icon_state_frames,
                     delay: delay.clone(),
+                    ..Default::default()
+                });
+            }
+
+            for corner in all::<Corner>() {
+                let mut icon_state_frames = vec![];
+
+                let corner_images = corners
+                    .get(corner)
+                    .unwrap()
+                    .get(CornerType::Concave)
+                    .unwrap();
+                for image in corner_images {
+                    let mut cut_img = DynamicImage::new_rgba8(
+                        self.bitmask_slice_config.icon_size_x,
+                        self.bitmask_slice_config.icon_size_y,
+                    );
+
+                    let (horizontal, vertical) = corner.sides_of_corner();
+                    let horizontal = self.bitmask_slice_config.get_side_info(horizontal).start;
+                    let vertical = self.bitmask_slice_config.get_side_info(vertical).start;
+
+                    imageops::overlay(&mut cut_img, image, horizontal as i64, vertical as i64);
+                    icon_state_frames.push(cut_img);
+                }
+
+                icon_states.push(IconState {
+                    name: format!("{}-{}", adjacency.bits(), corner.byond_dir()),
+                    dirs: 1,
+                    frames: num_frames,
+                    images: icon_state_frames,
+                    delay: delay.clone(),
+
                     ..Default::default()
                 });
             }
