@@ -1,12 +1,15 @@
-use crate::modes::error::ProcessorResult;
-use cutters::bitmask_dir_visibility::BitmaskDirectionalVis;
-use cutters::bitmask_slice::BitmaskSlice;
+use std::io::{BufRead, Seek};
+use std::path::PathBuf;
+
 use dmi::icon::Icon;
 use enum_dispatch::enum_dispatch;
 use image::DynamicImage;
 use serde::{Deserialize, Serialize};
-use std::io::{BufRead, Seek};
-use std::path::PathBuf;
+
+use cutters::bitmask_dir_visibility::BitmaskDirectionalVis;
+use cutters::bitmask_slice::BitmaskSlice;
+
+use crate::modes::error::ProcessorResult;
 
 pub mod cutters;
 pub mod error;

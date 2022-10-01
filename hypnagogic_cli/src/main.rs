@@ -1,16 +1,18 @@
-use anyhow::Result;
-use clap::Parser;
-use hypnagogic_core::config::template_resolver::file_resolver::FileResolver;
-use hypnagogic_core::config::Config;
-use hypnagogic_core::modes::CutterModeConfig;
-use image::DynamicImage;
-use rayon::prelude::*;
 use std::fs;
 use std::fs::{metadata, File};
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
+
+use anyhow::Result;
+use clap::Parser;
+use image::DynamicImage;
+use rayon::prelude::*;
 use tracing::{info, Level};
 use walkdir::WalkDir;
+
+use hypnagogic_core::config::template_resolver::file_resolver::FileResolver;
+use hypnagogic_core::config::Config;
+use hypnagogic_core::modes::CutterModeConfig;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]

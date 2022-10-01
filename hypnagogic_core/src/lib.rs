@@ -10,7 +10,7 @@
 // Not actually going to be a published crate, useless to add
 #![allow(clippy::cargo_common_metadata)]
 // Annoying
-#![allow(module_name_repetitions)]
+#![allow(clippy::module_name_repetitions)]
 
 pub mod config;
 pub mod modes;

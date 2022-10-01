@@ -1,10 +1,12 @@
 # Hypnagogic
+
 /ˌhipnəˈɡäjik/ - adjective - relating to the state immediately before falling asleep.
+
 ### A multipurpose icon processing tool for byond
 
 ## Configuration
 
-Hypnagogic needs configuration to operate on! 
+Hypnagogic needs configuration to operate on!
 
 Configuration is as simple as creating a .yaml file with the same name
 

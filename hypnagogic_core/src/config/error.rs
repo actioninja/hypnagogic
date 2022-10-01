@@ -1,6 +1,8 @@
-use crate::config::template_resolver::error::TemplateError;
 use std::path::PathBuf;
+
 use thiserror::Error;
+
+use crate::config::template_resolver::error::TemplateError;
 
 #[derive(Debug, Error)]
 pub enum ConfigError {

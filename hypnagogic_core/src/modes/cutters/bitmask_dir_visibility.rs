@@ -1,16 +1,18 @@
+use std::io::{BufRead, Seek};
+use std::path::PathBuf;
+
+use dmi::icon::{Icon, IconState};
+use enum_iterator::all;
+use fixed_map::Map;
+use image::{imageops, DynamicImage, GenericImageView, ImageFormat};
+use serde::{Deserialize, Serialize};
+
 use crate::modes::cutters::bitmask_slice::{
     BitmaskSlice, SideSpacing, SIZE_OF_CARDINALS, SIZE_OF_DIAGONALS,
 };
 use crate::modes::error::ProcessorResult;
 use crate::modes::CutterModeConfig;
 use crate::util::corners::{Corner, CornerType, Side};
-use dmi::icon::{Icon, IconState};
-use enum_iterator::all;
-use fixed_map::Map;
-use image::{imageops, DynamicImage, GenericImageView, ImageFormat};
-use serde::{Deserialize, Serialize};
-use std::io::{BufRead, Seek};
-use std::path::PathBuf;
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct BitmaskDirectionalVis {

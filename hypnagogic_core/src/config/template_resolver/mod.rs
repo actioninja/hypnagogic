@@ -1,8 +1,9 @@
-pub mod error;
-pub mod file_resolver;
+use serde_yaml::Value;
 
 use crate::config::template_resolver::error::TemplateResult;
-use serde_yaml::Value;
+
+pub mod error;
+pub mod file_resolver;
 
 pub trait TemplateResolver {
     /// Determines how exactly to resolve template strings. Primarily for the ability to manually

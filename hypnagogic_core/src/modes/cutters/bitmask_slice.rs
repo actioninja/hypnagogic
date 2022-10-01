@@ -1,17 +1,18 @@
-use crate::util::adjacency::Adjacency;
+use std::collections::HashMap;
+use std::io::{BufRead, Seek};
+use std::path::PathBuf;
+
 use dmi::icon::{Icon, IconState};
 use enum_iterator::all;
 use fixed_map::Map;
 use image::{imageops, DynamicImage, GenericImageView, ImageFormat};
 use serde::{Deserialize, Serialize};
 use shrinkwraprs::Shrinkwrap;
-use std::collections::HashMap;
-use std::io::{BufRead, Seek};
-use std::path::PathBuf;
 use tracing::{debug, trace};
 
 use crate::modes::error::ProcessorResult;
 use crate::modes::CutterModeConfig;
+use crate::util::adjacency::Adjacency;
 use crate::util::corners::{Corner, CornerType, Side};
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Shrinkwrap)]

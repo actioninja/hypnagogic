@@ -1,14 +1,16 @@
-use crate::config::error::{ConfigError, ConfigResult};
-use crate::config::template_resolver::error::TemplateError;
-use crate::config::template_resolver::TemplateResolver;
 use core::default::Default;
 use core::result::Result::{Err, Ok};
-use serde_yaml::value::Value;
 use std::fs;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
+
+use serde_yaml::value::Value;
 use tracing::{debug, trace};
+
+use crate::config::error::{ConfigError, ConfigResult};
+use crate::config::template_resolver::error::TemplateError;
+use crate::config::template_resolver::TemplateResolver;
 
 /// Loads templates from a folder on the filesystem.
 #[derive(Clone, PartialEq, Eq, Debug)]

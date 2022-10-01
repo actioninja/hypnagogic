@@ -1,15 +1,18 @@
-pub mod error;
-pub mod template_resolver;
+use std::io::{Read, Seek};
+
+use serde::{Deserialize, Serialize};
+use serde_yaml::{Mapping, Value};
+use tracing::{debug, trace};
+
+use template_resolver::TemplateResolver;
 
 use crate::config::error::ConfigResult;
 use crate::config::template_resolver::error::TemplateResult;
 use crate::modes::CutterMode;
 use crate::util::deep_merge_yaml;
-use serde::{Deserialize, Serialize};
-use serde_yaml::{Mapping, Value};
-use std::io::{Read, Seek};
-use template_resolver::TemplateResolver;
-use tracing::{debug, trace};
+
+pub mod error;
+pub mod template_resolver;
 
 pub const LATEST_VERSION: &str = "1";
 
@@ -103,8 +106,9 @@ pub fn resolve_templates(first: Value, resolver: impl TemplateResolver) -> Templ
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use serde_yaml::{Mapping, Value};
+
+    use super::*;
 
     #[test]
     fn extract_template_test() {
@@ -176,9 +180,11 @@ mod test {
     }
 
     mod config_templates {
-        use super::*;
-        use crate::config::resolve_templates;
         use serde_yaml::Value;
+
+        use crate::config::resolve_templates;
+
+        use super::*;
 
         #[test]
         fn flattening_simple() {
@@ -230,10 +236,12 @@ mod test {
     }
 
     mod config {
-        use super::*;
+        use std::io::Cursor;
+
         use crate::config::template_resolver::NullResolver;
         use crate::modes::cutters::bitmask_slice::BitmaskSlice;
-        use std::io::Cursor;
+
+        use super::*;
 
         #[test]
         fn symmetrical_serialize() {
