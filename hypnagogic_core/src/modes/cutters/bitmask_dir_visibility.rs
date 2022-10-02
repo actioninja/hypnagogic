@@ -12,7 +12,8 @@ use crate::modes::cutters::bitmask_slice::{
 };
 use crate::modes::error::ProcessorResult;
 use crate::modes::CutterModeConfig;
-use crate::util::corners::{Corner, CornerType, Side};
+use crate::util::adjacency::Adjacency;
+use crate::util::corners::{Corner, Side};
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct BitmaskDirectionalVis {
@@ -58,7 +59,7 @@ impl CutterModeConfig for BitmaskDirectionalVis {
 
         let mut icon_states = vec![];
 
-        for (adjacency, images) in assembled {
+        for (adjacency, images) in &assembled {
             for side in Side::dmi_cardinals() {
                 let mut icon_state_frames = vec![];
                 let slice_info = self.get_side_cuts(side);
@@ -79,7 +80,7 @@ impl CutterModeConfig for BitmaskDirectionalVis {
                     )
                 };
 
-                for image in &images {
+                for image in images {
                     let mut cut_img = DynamicImage::new_rgba8(
                         self.bitmask_slice_config.icon_size_x,
                         self.bitmask_slice_config.icon_size_y,
@@ -100,39 +101,48 @@ impl CutterModeConfig for BitmaskDirectionalVis {
                     ..Default::default()
                 });
             }
+        }
 
-            for corner in all::<Corner>() {
-                let mut icon_state_frames = vec![];
+        let convex_images = assembled.get(&Adjacency::CARDINALS).unwrap();
+        for corner in all::<Corner>() {
+            let mut icon_state_frames = vec![];
 
-                let corner_images = corners
-                    .get(corner)
-                    .unwrap()
-                    .get(CornerType::Concave)
-                    .unwrap();
-                for image in corner_images {
-                    let mut cut_img = DynamicImage::new_rgba8(
-                        self.bitmask_slice_config.icon_size_x,
-                        self.bitmask_slice_config.icon_size_y,
-                    );
+            let (horizontal, vertical) = corner.sides_of_corner();
 
-                    let (horizontal, vertical) = corner.sides_of_corner();
-                    let horizontal = self.bitmask_slice_config.get_side_info(horizontal).start;
-                    let vertical = self.bitmask_slice_config.get_side_info(vertical).start;
+            let horizontal_side_info = self.bitmask_slice_config.get_side_info(horizontal);
+            let x = horizontal_side_info.start;
+            let width = horizontal_side_info.step();
 
-                    imageops::overlay(&mut cut_img, image, horizontal as i64, vertical as i64);
-                    icon_state_frames.push(cut_img);
-                }
+            //todo: This is awful, maybe a better way to do this?
+            let (y, height) = if vertical == Side::North {
+                (0, *self.slice_point.get(vertical).unwrap())
+            } else {
+                let slice_point = *self.slice_point.get(vertical).unwrap();
+                let end = self.bitmask_slice_config.icon_size_y;
+                (slice_point, end - slice_point)
+            };
 
-                icon_states.push(IconState {
-                    name: format!("{}-{}", adjacency.bits(), corner.byond_dir()),
-                    dirs: 1,
-                    frames: num_frames,
-                    images: icon_state_frames,
-                    delay: delay.clone(),
+            for image in convex_images {
+                let mut cut_img = DynamicImage::new_rgba8(
+                    self.bitmask_slice_config.icon_size_x,
+                    self.bitmask_slice_config.icon_size_y,
+                );
 
-                    ..Default::default()
-                });
+                let crop_img = image.crop_imm(x, y, width, height);
+
+                imageops::overlay(&mut cut_img, &crop_img, x as i64, y as i64);
+                icon_state_frames.push(cut_img);
             }
+
+            icon_states.push(IconState {
+                name: format!("innercorner-{}", corner.byond_dir()),
+                dirs: 1,
+                frames: num_frames,
+                images: icon_state_frames,
+                delay: delay.clone(),
+
+                ..Default::default()
+            });
         }
 
         let out_icon = Icon {
