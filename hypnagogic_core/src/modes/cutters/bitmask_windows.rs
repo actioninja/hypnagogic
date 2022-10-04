@@ -1,20 +1,18 @@
-use crate::modes::cutters::bitmask_dir_visibility::BitmaskDirectionalVis;
 use crate::modes::cutters::bitmask_slice::{BitmaskSlice, CornerConfig, SIZE_OF_DIAGONALS};
 use crate::modes::cutters::delay_repeat;
 use crate::modes::error::ProcessorResult;
 use crate::modes::CutterModeConfig;
 use crate::util::adjacency::Adjacency;
-use crate::util::corners::{Corner, CornerType};
+use crate::util::corners::CornerType;
 use dmi::icon::{Icon, IconState};
-use enum_iterator::all;
+
 use fixed_map::Map;
-use image::{imageops, DynamicImage, GenericImageView, ImageFormat};
+use image::{DynamicImage, GenericImageView, ImageFormat};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::io::{BufRead, Seek};
-use std::iter::once;
-use std::path::{Path, PathBuf};
-use tracing::debug;
+
+use std::path::PathBuf;
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct BitmaskWindows {
@@ -158,8 +156,8 @@ impl CutterModeConfig for BitmaskWindows {
 
     fn debug_output<R: BufRead + Seek>(
         &self,
-        input: &mut R,
-        output_dir: PathBuf,
+        _input: &mut R,
+        _output_dir: PathBuf,
     ) -> ProcessorResult<DynamicImage> {
         Ok(DynamicImage::new_rgb8(1, 1))
     }
