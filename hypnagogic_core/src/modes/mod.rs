@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use cutters::bitmask_dir_visibility::BitmaskDirectionalVis;
 use cutters::bitmask_slice::BitmaskSlice;
+use cutters::bitmask_windows::BitmaskWindows;
 
 use crate::modes::error::ProcessorResult;
 
@@ -23,7 +24,7 @@ pub trait CutterModeConfig {
     fn perform_operation<R: BufRead + Seek>(
         &self,
         input: &mut R,
-    ) -> ProcessorResult<Vec<(String, Icon)>>;
+    ) -> ProcessorResult<Vec<(Option<String>, Icon)>>;
 
     /// Represents performing debug output as defined by implementor
     /// # Errors
@@ -40,4 +41,5 @@ pub trait CutterModeConfig {
 pub enum CutterMode {
     BitmaskSlice,
     BitmaskDirectionalVis,
+    BitmaskWindows,
 }

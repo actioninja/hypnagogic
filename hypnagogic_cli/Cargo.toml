@@ -9,10 +9,10 @@ license = "AGPL"
 
 [dependencies]
 anyhow = "1.0"
-clap = { version = "3.1", features = ["color", "suggestions", "deprecated", "derive", "wrap_help"] }
+clap = { version = "4.0", features = ["suggestions", "deprecated", "derive", "wrap_help"] }
 dmi = "0.1"
 dont_disappear = "3.0"
-image = "0.24"
+image = { version = "0.24", default-features = false, features = ["png", "gif"] }
 rayon = "1.5"
 serde = "1.0"
 serde_yaml = "0.9"

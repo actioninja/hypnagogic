@@ -15,28 +15,27 @@ use hypnagogic_core::config::Config;
 use hypnagogic_core::modes::CutterModeConfig;
 
 #[derive(Parser, Debug)]
-#[clap(author, version, about, long_about = None)]
+#[command(author, version, about, long_about = None)]
 struct Args {
     /// Print paths and operations
-    #[clap(short, long, value_parser)]
+    #[arg(short, long)]
     verbose: bool,
     /// Output as flat files instead of mirroring directory tree
-    #[clap(short, long, value_parser)]
+    #[arg(short, long)]
     flatten: bool,
     /// Print debug information and produce debug outputs
-    #[clap(short, long, value_parser)]
+    #[arg(short, long)]
     debug: bool,
     /// Doesn't wait for a keypress after running. For CI or toolchain usage.
-    #[clap(short = 'w', long, value_parser)]
+    #[arg(short = 'w', long)]
     dont_wait: bool,
     /// Output directory of folders. If not set, output will match the file tree and output adjacent to input
-    #[clap(short, long, value_parser)]
+    #[arg(short, long)]
     output: Option<String>,
     /// Location of the templates folder
-    #[clap(short, long, value_parser, default_value_t = String::from("templates"))]
+    #[arg(short, long, default_value_t = String::from("templates"))]
     templates: String,
     /// Input directory/file
-    #[clap(value_parser)]
     input: String,
 }
 
@@ -173,11 +172,16 @@ fn process_icon(
 
     let prefix = config.file_prefix.unwrap_or_else(|| "".to_string());
     for (name_hint, icon) in out {
+        let name_hint = name_hint
+            .map(|nh| format!("-{nh}"))
+            .unwrap_or_else(|| "".to_string());
         let mut new_path = in_img_path.clone();
+        new_path.set_extension("");
         let current_file_name = new_path.file_name().unwrap().to_str().unwrap();
-        new_path.set_file_name(format!("{prefix}{current_file_name}{name_hint}"));
-        new_path.set_extension("dmi");
-        info!(path = ?new_path, "Writing output");
+        let built_filename = format!("{prefix}{current_file_name}{name_hint}.dmi");
+        new_path.pop();
+        new_path.push(built_filename);
+        info!(name_hint = ?name_hint, path = ?new_path, "Writing output");
 
         process_path(&mut new_path);
 

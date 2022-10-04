@@ -27,7 +27,7 @@ impl CutterModeConfig for BitmaskDirectionalVis {
     fn perform_operation<R: BufRead + Seek>(
         &self,
         input: &mut R,
-    ) -> ProcessorResult<Vec<(String, Icon)>> {
+    ) -> ProcessorResult<Vec<(Option<String>, Icon)>> {
         let mut img = image::load(input, ImageFormat::Png)?;
         let (corners, prefabs) = self.bitmask_slice_config.generate_corners(&mut img)?;
 
@@ -151,7 +151,7 @@ impl CutterModeConfig for BitmaskDirectionalVis {
             height: self.bitmask_slice_config.output_icon_size_y,
             states: icon_states,
         };
-        Ok(vec![("".to_string(), out_icon)])
+        Ok(vec![(None, out_icon)])
     }
 
     fn debug_output<R: BufRead + Seek>(
