@@ -83,8 +83,7 @@ impl CutterModeConfig for BitmaskWindows {
 
         let delay = delay_repeat(&self.delay, num_frames as usize);
 
-        let mut upper_states = vec![];
-        let mut lower_states = vec![];
+        let mut states = vec![];
         for signature in 0..SIZE_OF_DIAGONALS {
             let adjacency = Adjacency::from_bits(signature as u8).unwrap();
 
@@ -114,16 +113,16 @@ impl CutterModeConfig for BitmaskWindows {
                     lower_frames.push(lower_img);
                 }
 
-                upper_states.push(IconState {
-                    name: format!("{prefix}{signature}"),
+                states.push(IconState {
+                    name: format!("{prefix}{signature}-upper"),
                     dirs: 1,
                     frames: num_frames,
                     images: upper_frames,
                     delay: delay.clone(),
                     ..Default::default()
                 });
-                lower_states.push(IconState {
-                    name: format!("{prefix}{signature}"),
+                states.push(IconState {
+                    name: format!("{prefix}{signature}-lower"),
                     dirs: 1,
                     frames: num_frames,
                     images: lower_frames,
@@ -135,23 +134,14 @@ impl CutterModeConfig for BitmaskWindows {
             states_from_assembled("alt-", &assembled_alt);
         }
 
-        let upper_icon = Icon {
+        let icon = Icon {
             width: self.output_icon_size_x,
             height: self.output_icon_size_y,
-            states: upper_states,
-            ..Default::default()
-        };
-        let lower_icon = Icon {
-            width: self.output_icon_size_x,
-            height: self.output_icon_size_y,
-            states: lower_states,
+            states,
             ..Default::default()
         };
 
-        Ok(vec![
-            (Some("upper".to_string()), upper_icon),
-            (Some("lower".to_string()), lower_icon),
-        ])
+        Ok(vec![(None, icon)])
     }
 
     fn debug_output<R: BufRead + Seek>(
