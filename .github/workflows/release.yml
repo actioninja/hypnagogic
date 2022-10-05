@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    name: Build
+    name: Build and Publish Release
     runs-on: windows-latest
     steps:
       - name: Checkout repository
@@ -44,7 +44,7 @@ jobs:
           files: artifacts/
           dest: hypnagogic-full-package.zip
       - name: Publish Release
-        uses: marvinpinto/action-automatic-release@latest
+        uses: marvinpinto/action-automatic-releases@v1.2.1
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: false
