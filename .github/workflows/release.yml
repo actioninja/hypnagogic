@@ -1,0 +1,56 @@
+name: Make release when version tag is pushed
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  build:
+    name: Build
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Install rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: Build windows release
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --target x86_64-pc-windows-msvc
+      - name: Build linux release
+        uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          command: build
+          args: --release --target x86_64-unknown-linux-gnu
+      - name: Create output folder
+        run: |
+          mkdir artifacts
+      - name: Copy to release artifact dir
+        run: |
+          cp target/x86_64-pc-windows-msvc/release/hypnagogic-cli.exe artifacts/hypnagogic.exe
+          cp target/x86_64-unknown-linux-gnu/release/hypnagogic-cli artifacts/hypnagogic
+          cp -r examples artifacts/examples
+          cp -r templates artifacts/templates
+          cp README.md artifacts/README.md
+          cp LICENSE.md artifacts/LICENSE.md
+      - name: Zip release artifacts
+        uses: vimtor/action-zip@v1
+        with:
+          files: artifacts/
+          dest: hypnagogic-full-package.zip
+      - name: Publish Release
+        uses: marvinpinto/action-automatic-release@latest
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          prerelease: false
+          files: |
+            hypnagogic-full-package.zip
+            artifacts/hypnagogic
+            artifacts/hypnagogic.exe
+            
+          
