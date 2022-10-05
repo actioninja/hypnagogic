@@ -6,39 +6,79 @@ on:
       - v*
 
 jobs:
-  build:
-    name: Build and Publish Release
+  build-windows:
+    name: Build and Upload Windows Artifact
     runs-on: windows-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v3
-      - name: Install rust toolchain
+      - name: Install Rust Toolchain
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-      - name: Build windows release
+      - name: Check Cache
+        uses: Swatinem/rust-cache@v2
+      - name: Build Windows Release
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --release --target x86_64-pc-windows-msvc
-      - name: Build linux release
+          args: --release
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-binary
+          path: target/release/hypnagogic-cli.exe
+  build-linux:
+    name: Build and Upload Linux Artifact
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+      - name: Install Rust Toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: Check Cache
+        uses: Swatinem/rust-cache@v2
+      - name: Build Linux Release
         uses: actions-rs/cargo@v1
         with:
-          use-cross: true
           command: build
-          args: --release --target x86_64-unknown-linux-gnu
-      - name: Create output folder
+          args: --release
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: linux-binary
+          path: target/release/hypnagogic-cli
+  zip-and-publish:
+    name: Create bundles and publish release
+    runs-on: ubuntu-latest
+    needs: [build-windows, build-linux]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+      - name: Create Output Folder
         run: |
           mkdir artifacts
+      - name: Download windows Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: windows-binary
+          path: artifacts
+      - name: Download Linux Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: linux-binary
+          path: artifacts
       - name: Copy to release artifact dir
         run: |
-          cp target/x86_64-pc-windows-msvc/release/hypnagogic-cli.exe artifacts/hypnagogic.exe
-          cp target/x86_64-unknown-linux-gnu/release/hypnagogic-cli artifacts/hypnagogic
+          mv artifacts/hypnagogic-cli artifacts/hypnagogic
+          mv artifacts/hypnagogic-cli.exe artifacts/hypnagogic.exe
           cp -r examples artifacts/examples
           cp -r templates artifacts/templates
           cp README.md artifacts/README.md
           cp LICENSE.md artifacts/LICENSE.md
-      - name: Zip release artifacts
+      - name: Zip Release Artifacts
         uses: vimtor/action-zip@v1
         with:
           files: artifacts/
