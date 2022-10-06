@@ -132,7 +132,7 @@ fn process_icon(
     let config = Config::load(
         &mut in_yaml_reader,
         FileResolver::new(Path::new(&templates))
-            .map_err(|err| Error::NoTemplateFolder(PathBuf::from(templates)))?,
+            .map_err(|_err| Error::NoTemplateFolder(PathBuf::from(templates)))?,
     )
     .map_err(|err| {
         let source_config = path
@@ -159,7 +159,7 @@ fn process_icon(
                     }
                 }
             }
-            ConfigError::YamlError(err) => Error::InvalidConfig {
+            ConfigError::YamlError(_err) => Error::InvalidConfig {
                 source_config,
                 cause: "Invalid Config".to_string(),
             },
@@ -167,7 +167,7 @@ fn process_icon(
     })?;
     let mut in_img_path = path.clone();
     in_img_path.set_extension("png");
-    let in_img_file = File::open(in_img_path.as_path()).map_err(|err| {
+    let in_img_file = File::open(in_img_path.as_path()).map_err(|_err| {
         let source_config = path
             .clone()
             .file_name()
