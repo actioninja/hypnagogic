@@ -4,6 +4,7 @@ use std::fs;
 use std::fs::{metadata, File};
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
+use std::process::exit;
 
 use anyhow::Result;
 use clap::Parser;
@@ -106,6 +107,7 @@ fn main() -> Result<()> {
         err.into_ufe().print();
         if !dont_wait {
             dont_disappear::any_key_to_continue::default();
+            exit(1);
         }
     }
 

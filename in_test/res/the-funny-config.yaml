@@ -1,0 +1,4 @@
+template: bitmask/slice-32x32
+mode: !BitmaskSlice
+  cut_position_x: 16
+  cut_position_y: 5
