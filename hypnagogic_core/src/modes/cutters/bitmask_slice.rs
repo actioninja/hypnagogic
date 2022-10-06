@@ -75,10 +75,10 @@ pub struct BitmaskSlice {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(default)]
-    pub prefabs: Option<HashMap<Adjacency, u32>>,
+    pub prefabs: Option<HashMap<u8, u32>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(default)]
-    pub prefabs_overlays: Option<HashMap<Adjacency, Vec<u32>>>,
+    pub prefabs_overlays: Option<HashMap<u8, Vec<u32>>>,
 
     pub is_diagonal: bool,
 
@@ -314,7 +314,7 @@ impl BitmaskSlice {
 
                     frame_vector.push(img);
                 }
-                prefabs.insert(*adjacency_bits, frame_vector);
+                prefabs.insert(Adjacency::from_bits(*adjacency_bits).unwrap(), frame_vector);
             }
         }
 
