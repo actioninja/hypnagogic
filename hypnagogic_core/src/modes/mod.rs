@@ -16,6 +16,7 @@ pub mod cutters;
 pub mod error;
 pub mod format_converter;
 
+/// Implement this trait to create a new type of icon operation
 #[enum_dispatch]
 pub trait CutterModeConfig {
     /// Represents performing an icon operation as defined by the implementor

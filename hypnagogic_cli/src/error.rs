@@ -1,3 +1,4 @@
+use hypnagogic_core::config::error::ConfigError;
 use std::io;
 use std::path::PathBuf;
 use thiserror::Error;
@@ -14,7 +15,7 @@ pub enum Error {
     #[error("Invalid Config File")]
     InvalidConfig {
         source_config: String,
-        cause: String,
+        config_error: ConfigError,
     },
     #[error("Template Not Found")]
     TemplateNotFound {
@@ -44,9 +45,13 @@ impl UFE for Error {
                 format!("Searched in `{search_dir:?}`"),
                 format!("Expected to find an input file named \"{expected}\""),
             ]),
-            Error::InvalidConfig { source_config, .. } => {
-                Some(vec![format!("Error within config \"{source_config}\"")])
-            }
+            Error::InvalidConfig {
+                source_config,
+                config_error,
+            } => Some(vec![
+                format!("Error within config \"{source_config}\""),
+                format!("{}", config_error),
+            ]),
             Error::TemplateNotFound {
                 source_config,
                 template_string,
@@ -72,10 +77,10 @@ impl UFE for Error {
             Error::InputNotFound { expected, .. } => {
                 Some(format!("Double check that the file \"{expected}\" exists, and if it does, that it's named correctly"))
             },
-            Error::InvalidConfig { .. } => Some("Do something I don't know".to_string()),
-            Error::TemplateNotFound { .. } => Some("Make sure you have spelled the template correctly, and that it exists!".to_string()),
-            Error::NoTemplateFolder(_) => Some("Check that you have spelled your template dir correctly, and make sure it exists!".to_string()),
-            Error::IO(_) => Some("Make sure the directories or files aren't in use, and you have permission to access them!".to_string())
+            Error::InvalidConfig { .. } => Some("Make sure the config conforms to the schema, and that all values are valid".to_string()),
+            Error::TemplateNotFound { .. } => Some("Make sure you have spelled the template correctly, and that it exists".to_string()),
+            Error::NoTemplateFolder(_) => Some("Check that you have spelled your template dir correctly, and make sure it exists".to_string()),
+            Error::IO(_) => Some("Make sure the directories or files aren't in use, and you have permission to access them".to_string())
         }
     }
 }

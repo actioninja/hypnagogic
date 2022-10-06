@@ -152,7 +152,7 @@ fn process_icon(
             .unwrap()
             .to_string();
         match err {
-            ConfigError::TemplateError(template_err) => {
+            ConfigError::Template(template_err) => {
                 if let TemplateError::FailedToFindTemplate(template_string, expected_path) =
                     template_err
                 {
@@ -168,7 +168,7 @@ fn process_icon(
                     }
                 }
             }
-            ConfigError::YamlError(_err) => Error::InvalidConfig {
+            ConfigError::Yaml(_err) => Error::InvalidConfig {
                 source_config,
                 cause: "Invalid Config".to_string(),
             },
