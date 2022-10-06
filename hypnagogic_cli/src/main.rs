@@ -5,6 +5,7 @@ use std::fs::{metadata, File};
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
 use std::process::exit;
+use std::time::Instant;
 
 use anyhow::Result;
 use clap::Parser;
@@ -47,6 +48,7 @@ struct Args {
 }
 
 fn main() -> Result<()> {
+    let now = Instant::now();
     let args = Args::parse();
     let Args {
         verbose,
@@ -99,9 +101,10 @@ fn main() -> Result<()> {
     let num_files = files_to_process.len();
     println!("Found {} files!", num_files);
 
-    let result = files_to_process
+    let result: Result<Vec<()>, Error> = files_to_process
         .par_iter()
-        .try_for_each(|path| process_icon(flatten, debug, &output, &templates, path));
+        .map(|path| process_icon(flatten, debug, &output, &templates, path))
+        .collect();
 
     if let Err(err) = result {
         err.into_ufe().print();
@@ -111,7 +114,11 @@ fn main() -> Result<()> {
         }
     }
 
-    println!("Successfully processed {} files!", num_files);
+    println!(
+        "Successfully processed {} files! (Took {:.2?})",
+        num_files,
+        now.elapsed()
+    );
 
     if !dont_wait {
         dont_disappear::any_key_to_continue::default();
