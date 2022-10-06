@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::io::{BufRead, Seek};
 use std::path::PathBuf;
 
@@ -331,8 +331,8 @@ impl BitmaskSlice {
         prefabs: &Prefabs,
         num_frames: u32,
         possible_states: usize,
-    ) -> HashMap<Adjacency, Vec<DynamicImage>> {
-        let mut assembled: HashMap<Adjacency, Vec<DynamicImage>> = HashMap::new();
+    ) -> BTreeMap<Adjacency, Vec<DynamicImage>> {
+        let mut assembled: BTreeMap<Adjacency, Vec<DynamicImage>> = BTreeMap::new();
         for signature in 0..possible_states {
             let adjacency = Adjacency::from_bits(signature as u8).unwrap();
             let mut icon_state_images = vec![];

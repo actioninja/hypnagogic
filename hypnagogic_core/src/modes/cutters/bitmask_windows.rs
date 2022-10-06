@@ -9,7 +9,7 @@ use dmi::icon::{Icon, IconState};
 use fixed_map::Map;
 use image::{DynamicImage, GenericImageView, ImageFormat};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::io::{BufRead, Seek};
 
 use std::path::PathBuf;
@@ -88,7 +88,7 @@ impl CutterModeConfig for BitmaskWindows {
             let adjacency = Adjacency::from_bits(signature as u8).unwrap();
 
             let mut states_from_assembled = |prefix: &str,
-                                             assembled_set: &HashMap<
+                                             assembled_set: &BTreeMap<
                 Adjacency,
                 Vec<DynamicImage>,
             >| {

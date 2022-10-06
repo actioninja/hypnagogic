@@ -3,7 +3,6 @@ use tracing::trace;
 
 pub mod adjacency;
 pub mod corners;
-mod helpers;
 
 #[tracing::instrument]
 pub(crate) fn deep_merge_yaml(first: &mut Value, second: Value) {
