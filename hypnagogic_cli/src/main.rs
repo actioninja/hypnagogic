@@ -1,6 +1,8 @@
+mod error;
+
 use std::fs;
 use std::fs::{metadata, File};
-use std::io::BufReader;
+use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
 
 use anyhow::Result;
@@ -8,8 +10,12 @@ use clap::Parser;
 use image::DynamicImage;
 use rayon::prelude::*;
 use tracing::{info, Level};
+use user_error::UFE;
 use walkdir::WalkDir;
 
+use crate::error::Error;
+use hypnagogic_core::config::error::ConfigError;
+use hypnagogic_core::config::template_resolver::error::TemplateError;
 use hypnagogic_core::config::template_resolver::file_resolver::FileResolver;
 use hypnagogic_core::config::Config;
 use hypnagogic_core::modes::CutterModeConfig;
@@ -92,9 +98,16 @@ fn main() -> Result<()> {
     let num_files = files_to_process.len();
     println!("Found {} files!", num_files);
 
-    files_to_process
+    let result = files_to_process
         .par_iter()
-        .try_for_each(|path| process_icon(flatten, debug, &output, &templates, path))?;
+        .try_for_each(|path| process_icon(flatten, debug, &output, &templates, path));
+
+    if let Err(err) = result {
+        err.into_ufe().print();
+        if !dont_wait {
+            dont_disappear::any_key_to_continue::default();
+        }
+    }
 
     println!("Successfully processed {} files!", num_files);
 
@@ -112,17 +125,68 @@ fn process_icon(
     output: &Option<String>,
     templates: &String,
     path: &PathBuf,
-) -> Result<(), anyhow::Error> {
+) -> Result<(), Error> {
     info!(path = ?path, "Found yaml at path");
     let in_file_yaml = File::open(path.as_path())?;
     let mut in_yaml_reader = BufReader::new(in_file_yaml);
     let config = Config::load(
         &mut in_yaml_reader,
-        FileResolver::new(Path::new(&templates))?,
-    )?;
+        FileResolver::new(Path::new(&templates))
+            .map_err(|err| Error::NoTemplateFolder(PathBuf::from(templates)))?,
+    )
+    .map_err(|err| {
+        let source_config = path
+            .clone()
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string();
+        match err {
+            ConfigError::TemplateError(template_err) => {
+                if let TemplateError::FailedToFindTemplate(template_string, expected_path) =
+                    template_err
+                {
+                    Error::TemplateNotFound {
+                        source_config,
+                        template_string,
+                        expected_path,
+                    }
+                } else {
+                    err
+                }
+            }
+            ConfigError::YamlError(err) => Error::InvalidConfig {
+                source_config,
+                cause: "Invalid Config".to_string(),
+            },
+            _ => err,
+        }
+    })?;
     let mut in_img_path = path.clone();
     in_img_path.set_extension("png");
-    let in_img_file = File::open(in_img_path.as_path())?;
+    let in_img_file = File::open(in_img_path.as_path()).map_err(|err| {
+        let source_config = path
+            .clone()
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string();
+        let expected = in_img_path
+            .clone()
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string();
+        let search_dir = path.clone().parent().unwrap().to_path_buf();
+        Error::InputNotFound {
+            source_config,
+            expected,
+            search_dir,
+        }
+    })?;
     let mut in_img_reader = BufReader::new(in_img_file.try_clone()?);
 
     let out = config.mode.perform_operation(&mut in_img_reader)?;
@@ -167,7 +231,7 @@ fn process_icon(
         process_path(&mut debug_path);
 
         info!(path = ?debug_path, "Writing debug");
-        debug_out.save(debug_path)?
+        debug_out.save(debug_path).unwrap();
     }
 
     let prefix = config.file_prefix.unwrap_or_else(|| "".to_string());

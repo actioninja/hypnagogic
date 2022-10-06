@@ -1,5 +1,6 @@
 use core::default::Default;
 use core::result::Result::{Err, Ok};
+use std::fmt::Formatter;
 use std::fs;
 use std::fs::File;
 use std::io::BufReader;
@@ -9,7 +10,7 @@ use serde_yaml::value::Value;
 use tracing::{debug, trace};
 
 use crate::config::error::{ConfigError, ConfigResult};
-use crate::config::template_resolver::error::TemplateError;
+use crate::config::template_resolver::error::{TemplateError, TemplateResult};
 use crate::config::template_resolver::TemplateResolver;
 
 /// Loads templates from a folder on the filesystem.
@@ -18,13 +19,28 @@ pub struct FileResolver {
     path: PathBuf,
 }
 
+#[derive(Debug)]
+pub struct NoTemplateDirError(PathBuf);
+
+impl std::fmt::Display for NoTemplateDirError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Template dir not found while creating FileResolver: {:?}",
+            self.0
+        )
+    }
+}
+
+impl std::error::Error for NoTemplateDirError {}
+
 impl FileResolver {
     /// Creates a new `FileResolver` with the given path
     /// # Errors
     /// Returns an error if `path` does not exist.
-    pub fn new(path: &Path) -> ConfigResult<Self> {
+    pub fn new(path: &Path) -> Result<Self, NoTemplateDirError> {
         let pathbuf =
-            fs::canonicalize(path).map_err(|_e| ConfigError::NoTemplateDir(path.to_path_buf()))?;
+            fs::canonicalize(path).map_err(|_e| NoTemplateDirError(path.to_path_buf()))?;
         Ok(FileResolver { path: pathbuf })
     }
 }
@@ -51,9 +67,10 @@ impl TemplateResolver for FileResolver {
         } else if yml_path.exists() {
             yml_path
         } else {
-            return Err(TemplateError::FailedToFindTemplate(format!(
-                "Template `{input}` does not exist"
-            )));
+            return Err(TemplateError::FailedToFindTemplate(
+                input.to_string(),
+                yaml_path.with_extension("yml|yaml"),
+            ));
         };
 
         trace!("Found template at {:?}", pathbuf);

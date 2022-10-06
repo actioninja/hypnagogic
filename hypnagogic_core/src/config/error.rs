@@ -1,4 +1,6 @@
+use std::fmt::Formatter;
 use std::path::PathBuf;
+use thiserror::__private::PathAsDisplay;
 
 use thiserror::Error;
 
