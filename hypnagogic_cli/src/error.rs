@@ -41,7 +41,7 @@ impl UFE for Error {
                 search_dir,
             } => Some(vec![
                 format!("Failed to find the input for a config ({source_config})"),
-                format!("Searched in \"{search_dir:?}\""),
+                format!("Searched in `{search_dir:?}`"),
                 format!("Expected to find an input file named \"{expected}\""),
             ]),
             Error::InvalidConfig { source_config, .. } => {
@@ -54,11 +54,11 @@ impl UFE for Error {
             } => Some(vec![
                 format!("Failed to find the template referenced in a config ({source_config})"),
                 format!("Config string was \"{template_string}\""),
-                format!("Expected to find a config at \"{expected_path:?}\""),
+                format!("Expected to find a config at {expected_path:?}"),
             ]),
             Error::NoTemplateFolder(folder) => Some(vec![
                 format!("Failed to find template folder"),
-                format!("Expected template folder at \"{folder:?}\""),
+                format!("Expected template folder at {folder:?}"),
             ]),
             Error::IO(err) => Some(vec![format!(
                 "Operation failed for reason of \"{:?}\"",
