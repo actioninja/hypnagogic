@@ -25,7 +25,7 @@ pub enum Error {
     #[error("No template folder")]
     NoTemplateFolder(PathBuf),
     #[error("Generic IO Error")]
-    IOError(#[from] io::Error),
+    IO(#[from] io::Error),
 }
 
 impl UFE for Error {
@@ -60,7 +60,7 @@ impl UFE for Error {
                 format!("Failed to find template folder"),
                 format!("Expected template folder at \"{folder:?}\""),
             ]),
-            Error::IOError(err) => Some(vec![format!(
+            Error::IO(err) => Some(vec![format!(
                 "Operation failed for reason of \"{:?}\"",
                 err.kind()
             )]),
@@ -75,7 +75,7 @@ impl UFE for Error {
             Error::InvalidConfig { .. } => Some("Do something I don't know".to_string()),
             Error::TemplateNotFound { .. } => Some("Make sure you have spelled the template correctly, and that it exists!".to_string()),
             Error::NoTemplateFolder(_) => Some("Check that you have spelled your template dir correctly, and make sure it exists!".to_string()),
-            Error::IOError(_) => Some("Make sure the directories or files aren't in use, and you have permission to access them!".to_string())
+            Error::IO(_) => Some("Make sure the directories or files aren't in use, and you have permission to access them!".to_string())
         }
     }
 }
