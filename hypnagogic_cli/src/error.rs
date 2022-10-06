@@ -1,9 +1,7 @@
-use hypnagogic_core::config::error::ConfigError;
-use std::fmt::format;
 use std::io;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use thiserror::Error;
-use user_error::{UserFacingError, UFE};
+use user_error::UFE;
 
 #[derive(Error, Debug)]
 pub enum Error {

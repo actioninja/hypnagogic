@@ -2,7 +2,7 @@ mod error;
 
 use std::fs;
 use std::fs::{metadata, File};
-use std::io::{BufReader, Read};
+use std::io::BufReader;
 use std::path::{Path, PathBuf};
 
 use anyhow::Result;
@@ -153,14 +153,16 @@ fn process_icon(
                         expected_path,
                     }
                 } else {
-                    err
+                    Error::InvalidConfig {
+                        source_config,
+                        cause: "Some Cause".to_string(),
+                    }
                 }
             }
             ConfigError::YamlError(err) => Error::InvalidConfig {
                 source_config,
                 cause: "Invalid Config".to_string(),
             },
-            _ => err,
         }
     })?;
     let mut in_img_path = path.clone();
@@ -189,7 +191,8 @@ fn process_icon(
     })?;
     let mut in_img_reader = BufReader::new(in_img_file.try_clone()?);
 
-    let out = config.mode.perform_operation(&mut in_img_reader)?;
+    //TODO: Operation error handling
+    let out = config.mode.perform_operation(&mut in_img_reader).unwrap();
 
     if let Some(output) = &output {
         let output_path = Path::new(output);
@@ -221,7 +224,8 @@ fn process_icon(
         fs::create_dir_all(debug_output_dir.as_path())?;
         let debug_out: DynamicImage = config
             .mode
-            .debug_output(&mut debug_reader, debug_output_dir)?;
+            .debug_output(&mut debug_reader, debug_output_dir)
+            .unwrap();
         let mut debug_path = in_img_path.clone();
         debug_path.set_extension("");
         let current_file_name = debug_path.file_name().unwrap().to_str().unwrap();
@@ -259,7 +263,8 @@ fn process_icon(
 
         let mut file = File::create(new_path).expect("Failed to create output file (This is a program error, not a config error! Please report!)");
 
-        icon.save(&mut file)?;
+        //TODO: figure out a better thing to do than just the unwrap
+        icon.save(&mut file).unwrap();
     }
     Ok(())
 }
