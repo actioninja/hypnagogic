@@ -47,6 +47,8 @@ struct Args {
     input: String,
 }
 
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 fn main() -> Result<()> {
     let now = Instant::now();
     let args = Args::parse();
@@ -59,6 +61,8 @@ fn main() -> Result<()> {
         templates,
         input,
     } = args;
+
+    println!("Hypnagogic CLI v{VERSION}");
 
     if debug {
         let subscriber = tracing_subscriber::fmt()
@@ -249,7 +253,7 @@ fn process_icon(
         debug_out.save(debug_path).unwrap();
     }
 
-    let prefix = config.file_prefix.unwrap_or_else(|| "".to_string());
+    let prefix = config.file_prefix.unwrap_or_default();
     for (name_hint, icon) in out {
         let name_hint = name_hint
             .map(|nh| format!("-{nh}"))
