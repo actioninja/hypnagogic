@@ -1,0 +1,4 @@
+template = "bitmask/slice-tallwalls-directionalvis"
+
+[prefabs]
+0 = 5

@@ -16,4 +16,4 @@ generated_diagnostic.adoc
 .envrc
 junk/
 *.dmi
-*DEBUG*
+*DEBUGOUT*

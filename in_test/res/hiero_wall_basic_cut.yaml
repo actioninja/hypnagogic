@@ -1,4 +1,0 @@
-template: bitmask/slice-tallwalls-directionalvis
-mode: !BitmaskDirectionalVis
-  delay:
-    - 1

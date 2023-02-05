@@ -2,14 +2,12 @@ use core::default::Default;
 use core::result::Result::{Err, Ok};
 use std::fmt::Formatter;
 use std::fs;
-use std::fs::File;
-use std::io::BufReader;
 use std::path::{Path, PathBuf};
+use toml::Value;
 
-use serde_yaml::value::Value;
 use tracing::{debug, trace};
 
-use crate::config::template_resolver::error::TemplateError;
+use crate::config::template_resolver::error::{TemplateError, TemplateResult};
 use crate::config::template_resolver::TemplateResolver;
 
 /// Loads templates from a folder on the filesystem.
@@ -52,32 +50,27 @@ impl Default for FileResolver {
 
 impl TemplateResolver for FileResolver {
     #[tracing::instrument(skip(input))]
-    fn resolve(&self, input: &str) -> Result<Value, TemplateError> {
+    fn resolve(&self, input: &str) -> TemplateResult {
         let mut pathbuf = self.path.clone();
         pathbuf.push(Path::new(input));
 
         debug!(canon = ?pathbuf, "Full path parsed");
 
-        let yaml_path = pathbuf.with_extension("yml");
-        let yml_path = pathbuf.with_extension("yaml");
+        let toml_path = pathbuf.with_extension("toml");
 
-        pathbuf = if yaml_path.exists() {
-            yaml_path
-        } else if yml_path.exists() {
-            yml_path
+        pathbuf = if toml_path.exists() {
+            toml_path
         } else {
             return Err(TemplateError::FailedToFindTemplate(
                 input.to_string(),
-                yaml_path.with_extension("yml|yaml"),
+                toml_path,
             ));
         };
 
         trace!("Found template at {:?}", pathbuf);
 
-        let file = File::open(pathbuf.as_path())?;
-        let reader = BufReader::new(file);
-
-        let deserialized: Value = serde_yaml::from_reader(reader)?;
+        let toml_string = fs::read_to_string(pathbuf.as_path())?;
+        let deserialized: Value = toml::from_str(&toml_string)?;
         debug!(deserialized = ?deserialized, "Deserialized template");
         Ok(deserialized)
     }

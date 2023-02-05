@@ -1,0 +1,4 @@
+template = "bitmask/slice-tallwalls-directionalvis"
+
+[animation]
+delays = [1]

@@ -1,6 +1,7 @@
 use enum_iterator::Sequence;
 use fixed_map::Key;
 use serde::{Deserialize, Serialize};
+use std::fmt::{Display, Formatter};
 
 /// Represents a "side" of a given tile. Directions correspond to unrotated cardinal directions,
 /// with "North" pointing "upwards."
@@ -13,6 +14,29 @@ pub enum Side {
     South,
     East,
     West,
+}
+
+impl From<&str> for Side {
+    fn from(s: &str) -> Self {
+        match s {
+            "north" => Self::North,
+            "south" => Self::South,
+            "east" => Self::East,
+            "west" => Self::West,
+            _ => panic!("Invalid side: {}", s),
+        }
+    }
+}
+
+impl Display for Side {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Side::North => write!(f, "north"),
+            Side::South => write!(f, "south"),
+            Side::East => write!(f, "east"),
+            Side::West => write!(f, "west"),
+        }
+    }
 }
 
 impl Side {
@@ -58,6 +82,8 @@ pub enum Corner {
 }
 
 impl Corner {
+    /// Returns the two sides that make up a given corner
+    /// Order is always (horizontal, vertical)
     #[must_use]
     pub const fn sides_of_corner(self) -> (Side, Side) {
         match self {
@@ -85,6 +111,31 @@ pub enum CornerType {
     Horizontal,
     Vertical,
     Flat,
+}
+
+impl From<&str> for CornerType {
+    fn from(value: &str) -> Self {
+        match value {
+            "convex" => Self::Convex,
+            "concave" => Self::Concave,
+            "horizontal" => Self::Horizontal,
+            "vertical" => Self::Vertical,
+            "flat" => Self::Flat,
+            _ => panic!("Invalid String: {}", value),
+        }
+    }
+}
+
+impl Display for CornerType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CornerType::Convex => write!(f, "convex"),
+            CornerType::Concave => write!(f, "concave"),
+            CornerType::Horizontal => write!(f, "horizontal"),
+            CornerType::Vertical => write!(f, "vertical"),
+            CornerType::Flat => write!(f, "flat"),
+        }
+    }
 }
 
 impl CornerType {

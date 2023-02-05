@@ -11,5 +11,5 @@
 #![allow(clippy::module_name_repetitions)]
 
 pub mod config;
-pub mod modes;
+pub mod operations;
 pub mod util;

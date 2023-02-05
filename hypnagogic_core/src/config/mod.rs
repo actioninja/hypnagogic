@@ -1,54 +1,36 @@
-use std::io::{Read, Seek};
+use std::io::{read_to_string, Read, Seek};
 
-use serde::{Deserialize, Serialize};
-use serde_yaml::{Mapping, Value};
+use serde::Deserialize;
+use toml::map::Map;
+use toml::Value;
 use tracing::{debug, trace};
 
 use template_resolver::TemplateResolver;
 
 use crate::config::error::ConfigResult;
 use crate::config::template_resolver::error::TemplateResult;
-use crate::modes::CutterMode;
-use crate::util::deep_merge_yaml;
+use crate::operations::IconOperation;
+use crate::util::deep_merge_toml;
 
+pub mod blocks;
 pub mod error;
 pub mod template_resolver;
 
 pub const LATEST_VERSION: &str = "1";
 
-#[derive(Copy, Clone, Default, PartialEq, Eq, Debug, Serialize, Deserialize)]
-pub struct CornersData<T> {
-    pub southeast: T,
-    pub northwest: T,
-    pub northeast: T,
-    pub southwest: T,
-}
+#[tracing::instrument(skip(resolver, input))]
+pub fn read_config<R: Read + Seek>(
+    input: &mut R,
+    resolver: impl TemplateResolver,
+) -> ConfigResult<IconOperation> {
+    let reader_string = read_to_string(input)?;
+    let toml_value = toml::from_str(&reader_string)?;
 
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub struct Config {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(default)]
-    pub file_prefix: Option<String>,
-    pub mode: CutterMode,
-}
+    let result_value = resolve_templates(toml_value, resolver)?;
 
-impl Config {
-    /// Load a config from a reader and provide a collapsed, template resolved config back.
-    /// # Errors
-    /// Returns an error if serde fails to load from the reader
-    #[tracing::instrument(skip(resolver, input))]
-    pub fn load<R: Read + Seek>(
-        input: &mut R,
-        resolver: impl TemplateResolver,
-    ) -> ConfigResult<Config> {
-        let config = serde_yaml::from_reader(input)?;
-
-        let result_value = resolve_templates(config, resolver)?;
-
-        let out_config: Self = serde_yaml::from_value(result_value)?;
-        debug!(config = ?out_config, "Deserialized");
-        Ok(out_config)
-    }
+    let out_icon_mode: IconOperation = IconOperation::deserialize(result_value)?;
+    debug!(config = ?out_icon_mode, "Deserialized");
+    Ok(out_icon_mode)
 }
 
 /// Seeks out template string from a value and returns it as a `Some(String)`
@@ -56,8 +38,8 @@ impl Config {
 /// SIDE EFFECT: removes it from the `Value` if it finds it!
 fn extract_template_string(value: &mut Value) -> Option<String> {
     match value {
-        Value::Mapping(mapping) => {
-            if let Some(Value::String(string)) = mapping.remove("template") {
+        Value::Table(table) => {
+            if let Some(Value::String(string)) = table.remove("template") {
                 Some(string)
             } else {
                 None
@@ -93,10 +75,9 @@ pub fn resolve_templates(first: Value, resolver: impl TemplateResolver) -> Templ
     }
     trace!(num_in_chain = ?stack.len(), stack = ?stack, "Finished resolving templates");
     //merge stack in to one hashmap
-    let mut out: Value = Mapping::new().into();
-    for conf in stack.iter().rev() {
-        let conf_value: Value = conf.clone();
-        deep_merge_yaml(&mut out, conf_value);
+    let mut out: Value = Value::Table(Map::new());
+    for conf in stack.iter_mut().rev() {
+        deep_merge_toml(&mut out, conf.clone());
         trace!(current = ?out, collapsing = ?conf, "Collapsing value step");
     }
 
@@ -106,73 +87,71 @@ pub fn resolve_templates(first: Value, resolver: impl TemplateResolver) -> Templ
 
 #[cfg(test)]
 mod test {
-    use serde_yaml::{Mapping, Value};
-
     use super::*;
 
     #[test]
     fn extract_template_test() {
-        let mut mapping = Mapping::new();
-        mapping.insert("template".into(), "found".into());
-        mapping.insert("still_there".into(), "junk".into());
+        let mapping = r#"
+        template = "found"
+        still_there = "junk"
+        "#;
 
-        let mut value: Value = mapping.into();
+        let mut toml_value: Value = toml::from_str(mapping).unwrap();
 
-        let extracted = extract_template_string(&mut value).unwrap();
+        let extracted = extract_template_string(&mut toml_value).unwrap();
 
         let expected = "found".to_string();
 
         assert_eq!(extracted, expected);
 
-        let mut expected_value = Mapping::new();
-        expected_value.insert("still_there".into(), "junk".into());
-        let expected_value: Value = expected_value.into();
+        let expected_mapping = r#"still_there = "junk""#;
+        let expected_value: Value = toml::from_str(expected_mapping).unwrap();
 
-        assert_eq!(value, expected_value);
+        assert_eq!(toml_value, expected_value);
     }
 
     struct TestResolver;
 
     impl TemplateResolver for TestResolver {
         fn resolve(&self, input: &str) -> TemplateResult {
-            let first_string = "---
-                template: second
-                second: 2
-                third: 2
-            ";
+            let first_string = r#"
+            template = "second"
+            second = 1
+            third = 1
+            "#;
 
-            let second_string = "---
-                first: 3
-                second: 3
-                third: 3
-                fourth: 3
-            ";
+            let second_string = r#"
+            first = 2
+            second = 2
+            third = 2
+            fourth = 2
+            "#;
 
-            let fourth_string = "---
-                template: fifth
-                first: 4
-                second: 4
-                third: 4
-                inner:
-                    inner1: 4
-                    inner2: 4
-            ";
+            let third_string = r#"
+            template = "fourth"
+            first = 3
+            second = 3
+            third = 3
+            [inner]
+            inner_1 = 3
+            inner_2 = 3
+            "#;
 
-            let fifth_string = "---
-                first: 5
-                second: 5
-                third: 5
-                inner:
-                    inner1: 5
-                    inner2: 5
-                    inner3: 5
-            ";
+            let fourth_string = r#"
+            first = 4
+            second = 4
+            third = 4
+            [inner]
+            inner_1 = 4
+            inner_2 = 4
+            inner_3 = 4
+            "#;
 
-            Ok(serde_yaml::from_str(match input {
+            Ok(toml::from_str(match input {
                 "first" => first_string,
                 "second" => second_string,
+                "third" => third_string,
                 "fourth" => fourth_string,
-                "fifth" => fifth_string,
                 _ => panic!("Malformed test"),
             })
             .unwrap())
@@ -180,82 +159,105 @@ mod test {
     }
 
     mod config_templates {
-        use serde_yaml::Value;
-
         use crate::config::resolve_templates;
 
         use super::*;
 
         #[test]
         fn flattening_simple() {
-            let input_string = "---
-                template: first
-                first: 1
-                second: 1
-            ";
-            let input: Value = serde_yaml::from_str(input_string).unwrap();
+            let input_string = r#"
+            template = "first"
+            first = 10
+            second = 10
+            "#;
+
+            let input: Value = toml::from_str(input_string).unwrap();
 
             let result = resolve_templates(input, TestResolver).unwrap();
 
-            let expected_string = "---
-                first: 1
-                second: 1
-                third: 2
-                fourth: 3
-            ";
-            let expected: Value = serde_yaml::from_str(expected_string).unwrap();
+            let expected_string = r#"
+            first = 10
+            second = 10
+            third = 1
+            fourth = 2
+            "#;
+            let expected: Value = toml::from_str(expected_string).unwrap();
             assert_eq!(result, expected);
         }
 
         #[test]
         fn flattening_complex() {
-            let input_string = "---
-                template: fourth
-                first: 1
-                second: 1
-                inner:
-                    inner1: 1
-            ";
+            let input_string = r#"
+            template = "third"
+            first = 10
+            second = 10
+            [inner]
+            inner_1 = 10
+            "#;
 
-            let input: Value = serde_yaml::from_str(input_string).unwrap();
+            let input: Value = toml::from_str(input_string).unwrap();
 
             let result = resolve_templates(input, TestResolver).unwrap();
 
-            let expected_string = "---
-                first: 1
-                second: 1
-                third: 4
-                inner:
-                    inner1: 1
-                    inner2: 4
-                    inner3: 5
-            ";
-            let expected_value: Value = serde_yaml::from_str(expected_string).unwrap();
+            let expected_string = r#"
+            first = 10
+            second = 10
+            third = 3
+            [inner]
+            inner_1 = 10
+            inner_2 = 3
+            inner_3 = 4
+            "#;
+            let expected_value: Value = toml::from_str(expected_string).unwrap();
             assert_eq!(result, expected_value);
         }
     }
 
     mod config {
-        use std::io::Cursor;
-
-        use crate::config::template_resolver::NullResolver;
-        use crate::modes::cutters::bitmask_slice::BitmaskSlice;
+        use crate::operations::cutters::bitmask_slice::BitmaskSlice;
 
         use super::*;
 
         #[test]
         fn symmetrical_serialize() {
-            let config = Config {
-                file_prefix: None,
-                mode: BitmaskSlice::default().into(),
-            };
-            let config_string = serde_yaml::to_string(&config).unwrap();
+            let config: IconOperation = BitmaskSlice::default().into();
 
-            let mut reader = Cursor::new(&config_string);
+            println!("toml:");
 
-            let result = Config::load(&mut reader, NullResolver).unwrap();
+            let tomled = toml::to_string(&config).unwrap();
+            println!("{tomled}");
 
-            assert_eq!(result, config);
+            let test_toml = "
+                operation = \"BitmaskSlice\"
+                produce_dirs = false
+                smooth_diagonally = false
+
+                [icon_size]
+                x = 32
+                y = 32
+
+                [output_icon_pos]
+                x = 0
+                y = 0
+
+                [output_icon_size]
+                x = 32
+                y = 32
+
+                [positions]
+                concave = 1
+                convex = 0
+                horizontal = 2
+                vertical = 3
+
+                [cut_position]
+                x = 16
+                y = 16
+            ";
+
+            let deserialized: IconOperation = toml::from_str(test_toml).unwrap();
+            println!("deserialized");
+            println!("{deserialized:#?}");
         }
     }
 }

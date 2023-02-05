@@ -1,40 +1,43 @@
 use std::io::{BufRead, Seek};
-use std::path::PathBuf;
 
-use dmi::icon::{DmiVersion, Icon, IconState};
+use crate::config::blocks::cutters::SlicePoint;
+use dmi::icon::{Icon, IconState};
 use enum_iterator::all;
-use fixed_map::Map;
 use image::{imageops, DynamicImage, GenericImageView, ImageFormat};
 use serde::{Deserialize, Serialize};
 
-use crate::modes::cutters::bitmask_slice::{
+use crate::operations::cutters::bitmask_slice::{
     BitmaskSlice, SideSpacing, SIZE_OF_CARDINALS, SIZE_OF_DIAGONALS,
 };
-use crate::modes::error::ProcessorResult;
-use crate::modes::CutterModeConfig;
+use crate::operations::error::ProcessorResult;
+use crate::operations::{IconOperationConfig, NamedIcon, OperationMode, ProcessorPayload};
 use crate::util::adjacency::Adjacency;
 use crate::util::corners::{Corner, Side};
+use crate::util::repeat_for;
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct BitmaskDirectionalVis {
     #[serde(flatten)]
     pub bitmask_slice_config: BitmaskSlice,
+    pub slice_point: SlicePoint,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
     pub mask_color: Option<String>,
-    pub slice_point: Map<Side, u32>,
 }
 
-impl CutterModeConfig for BitmaskDirectionalVis {
+impl IconOperationConfig for BitmaskDirectionalVis {
     fn perform_operation<R: BufRead + Seek>(
         &self,
         input: &mut R,
-    ) -> ProcessorResult<Vec<(Option<String>, Icon)>> {
+        mode: OperationMode,
+    ) -> ProcessorResult<ProcessorPayload> {
         let mut img = image::load(input, ImageFormat::Png)?;
         let (corners, prefabs) = self.bitmask_slice_config.generate_corners(&mut img)?;
 
         let (_in_x, in_y) = img.dimensions();
-        let num_frames = in_y / self.bitmask_slice_config.icon_size_y;
+        let num_frames = in_y / self.bitmask_slice_config.icon_size.y;
 
-        let possible_states = if self.bitmask_slice_config.is_diagonal {
+        let possible_states = if self.bitmask_slice_config.smooth_diagonally {
             SIZE_OF_DIAGONALS
         } else {
             SIZE_OF_CARDINALS
@@ -47,15 +50,11 @@ impl CutterModeConfig for BitmaskDirectionalVis {
             possible_states,
         );
 
-        // fairly gnarly iterator chain; loops delay sequence and then takes number of frames
-        let delay: Option<Vec<f32>> = self.bitmask_slice_config.delay.clone().map(|inner| {
-            inner
-                .iter()
-                .cycle()
-                .take(num_frames as usize)
-                .copied()
-                .collect()
-        });
+        let delay = self
+            .bitmask_slice_config
+            .animation
+            .clone()
+            .map(|x| repeat_for(&x.delays, num_frames as usize));
 
         let mut icon_states = vec![];
 
@@ -68,7 +67,7 @@ impl CutterModeConfig for BitmaskDirectionalVis {
                     (
                         0,
                         slice_info.start,
-                        self.bitmask_slice_config.icon_size_x,
+                        self.bitmask_slice_config.icon_size.x,
                         slice_info.step(),
                     )
                 } else {
@@ -76,14 +75,14 @@ impl CutterModeConfig for BitmaskDirectionalVis {
                         slice_info.start,
                         0,
                         slice_info.step(),
-                        self.bitmask_slice_config.icon_size_y,
+                        self.bitmask_slice_config.icon_size.y,
                     )
                 };
 
                 for image in images {
                     let mut cut_img = DynamicImage::new_rgba8(
-                        self.bitmask_slice_config.icon_size_x,
-                        self.bitmask_slice_config.icon_size_y,
+                        self.bitmask_slice_config.icon_size.x,
+                        self.bitmask_slice_config.icon_size.y,
                     );
 
                     let crop = image.crop_imm(x, y, width, height);
@@ -115,17 +114,17 @@ impl CutterModeConfig for BitmaskDirectionalVis {
 
             //todo: This is awful, maybe a better way to do this?
             let (y, height) = if vertical == Side::North {
-                (0, *self.slice_point.get(vertical).unwrap())
+                (0, self.slice_point.get(vertical).unwrap())
             } else {
-                let slice_point = *self.slice_point.get(vertical).unwrap();
-                let end = self.bitmask_slice_config.icon_size_y;
+                let slice_point = self.slice_point.get(vertical).unwrap();
+                let end = self.bitmask_slice_config.icon_size.y;
                 (slice_point, end - slice_point)
             };
 
             for image in convex_images {
                 let mut cut_img = DynamicImage::new_rgba8(
-                    self.bitmask_slice_config.icon_size_x,
-                    self.bitmask_slice_config.icon_size_y,
+                    self.bitmask_slice_config.icon_size.x,
+                    self.bitmask_slice_config.icon_size.y,
                 );
 
                 let crop_img = image.crop_imm(x, y, width, height);
@@ -146,20 +145,25 @@ impl CutterModeConfig for BitmaskDirectionalVis {
         }
 
         let out_icon = Icon {
-            version: DmiVersion::default(),
-            width: self.bitmask_slice_config.output_icon_size_x,
-            height: self.bitmask_slice_config.output_icon_size_y,
+            version: dmi::icon::DmiVersion::default(),
+            width: self.bitmask_slice_config.output_icon_size.x,
+            height: self.bitmask_slice_config.output_icon_size.y,
             states: icon_states,
         };
-        Ok(vec![(None, out_icon)])
+
+        if mode == OperationMode::Debug {
+            let mut out = self.bitmask_slice_config.generate_debug_icons(&corners);
+
+            out.push(NamedIcon::from_icon(out_icon));
+            Ok(ProcessorPayload::MultipleNamed(out))
+        } else {
+            Ok(ProcessorPayload::from_icon(out_icon))
+        }
     }
 
-    fn debug_output<R: BufRead + Seek>(
-        &self,
-        input: &mut R,
-        output_dir: PathBuf,
-    ) -> ProcessorResult<DynamicImage> {
-        self.bitmask_slice_config.debug_output(input, output_dir)
+    fn verify_config(&self) -> ProcessorResult<()> {
+        //TODO: actually verify config
+        Ok(())
     }
 }
 
@@ -167,24 +171,25 @@ impl BitmaskDirectionalVis {
     /// Gets the side cutter info for a given side based on the slice point
     /// # Panics
     /// Can panic if the `slice_point` map is unpopulated, which shouldn't happen if initialized correctly
+    /// Generally indicates a bad implementation of `BitmaskDirectionalVis`
     #[must_use]
     pub fn get_side_cuts(&self, side: Side) -> SideSpacing {
         match side {
             Side::North => SideSpacing {
                 start: 0,
-                end: *self.slice_point.get(Side::North).unwrap(),
+                end: self.slice_point.get(Side::North).unwrap(),
             },
             Side::South => SideSpacing {
-                start: *self.slice_point.get(Side::South).unwrap(),
-                end: self.bitmask_slice_config.icon_size_y,
+                start: self.slice_point.get(Side::South).unwrap(),
+                end: self.bitmask_slice_config.icon_size.y,
             },
             Side::East => SideSpacing {
-                start: *self.slice_point.get(Side::East).unwrap(),
-                end: self.bitmask_slice_config.icon_size_x,
+                start: self.slice_point.get(Side::East).unwrap(),
+                end: self.bitmask_slice_config.icon_size.x,
             },
             Side::West => SideSpacing {
                 start: 0,
-                end: *self.slice_point.get(Side::West).unwrap(),
+                end: self.slice_point.get(Side::West).unwrap(),
             },
         }
     }

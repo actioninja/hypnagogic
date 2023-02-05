@@ -1,0 +1,15 @@
+template = "bitmask/slice-32x32-diagonals"
+
+mode = "BitmaskSlice"
+
+[icon_size]
+x = 32
+y = 48
+
+[output_icon_size]
+x = 32
+y = 48
+
+[cut_pos]
+x = 16
+y = 12

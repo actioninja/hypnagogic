@@ -1,0 +1,33 @@
+mode = "BitmaskDirectionalVis"
+
+produce_dirs = false
+smooth_diagonally = true
+
+[icon_size]
+x = 32
+y = 48
+
+[output_icon_pos]
+x = 0
+y = 0
+
+[output_icon_size]
+x = 32
+y = 48
+
+[cut_pos]
+x = 16
+y = 12
+
+[positions]
+convex = 0
+concave = 1
+horizontal = 2
+vertical = 3
+flat = 4
+
+[slice_point]
+west = 4
+north = 16
+south = 16
+east = 28

@@ -1,6 +1,6 @@
-use serde_yaml::Value;
-
 use crate::config::template_resolver::error::TemplateResult;
+use toml::map::Map;
+use toml::Value;
 
 pub mod error;
 pub mod file_resolver;
@@ -20,6 +20,6 @@ pub struct NullResolver;
 
 impl TemplateResolver for NullResolver {
     fn resolve(&self, _: &str) -> TemplateResult {
-        Ok(Value::default())
+        Ok(Value::Table(Map::new()))
     }
 }

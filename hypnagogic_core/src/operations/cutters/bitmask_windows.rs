@@ -1,9 +1,9 @@
-use crate::modes::cutters::bitmask_slice::{BitmaskSlice, CornerConfig, SIZE_OF_DIAGONALS};
-use crate::modes::cutters::delay_repeat;
-use crate::modes::error::ProcessorResult;
-use crate::modes::CutterModeConfig;
+use crate::operations::cutters::bitmask_slice::{BitmaskSlice, SIZE_OF_DIAGONALS};
+use crate::operations::error::ProcessorResult;
+use crate::operations::{IconOperationConfig, OperationMode, ProcessorPayload};
 use crate::util::adjacency::Adjacency;
 use crate::util::corners::CornerType;
+use crate::util::repeat_for;
 use dmi::icon::{Icon, IconState};
 
 use fixed_map::Map;
@@ -12,54 +12,50 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::io::{BufRead, Seek};
 
-use std::path::PathBuf;
+use crate::config::blocks::cutters::{
+    Animation, CutPosition, IconSize, OutputIconPosition, OutputIconSize, Positions,
+};
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct BitmaskWindows {
-    pub icon_size_x: u32,
-    pub icon_size_y: u32,
-    pub output_icon_pos_x: u32,
-    pub output_icon_pos_y: u32,
-    pub output_icon_size_x: u32,
-    pub output_icon_size_y: u32,
-    pub delay: Option<Vec<f32>>,
+    pub icon_size: IconSize,
+    pub output_icon_pos: OutputIconPosition,
+    pub output_icon_size: OutputIconSize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
+    pub animation: Option<Animation>,
 }
 
-impl CutterModeConfig for BitmaskWindows {
+impl IconOperationConfig for BitmaskWindows {
     #[tracing::instrument(skip(input))]
     fn perform_operation<R: BufRead + Seek>(
         &self,
         input: &mut R,
-    ) -> ProcessorResult<Vec<(Option<String>, Icon)>> {
+        mode: OperationMode,
+    ) -> ProcessorResult<ProcessorPayload> {
         let mut img = image::load(input, ImageFormat::Png)?;
 
         let (_in_x, in_y) = img.dimensions();
-        let num_frames = in_y / self.icon_size_y;
+        let num_frames = in_y / self.icon_size.y;
 
-        let mut positions = Map::new();
-        positions.insert(CornerType::Convex, 0);
-        positions.insert(CornerType::Concave, 1);
-        positions.insert(CornerType::Horizontal, 2);
-        positions.insert(CornerType::Vertical, 3);
-        positions.insert(CornerType::Flat, 4);
+        let mut positions = Positions::default();
+        positions.0.insert(CornerType::Flat, 4);
 
         let bitmask_config = BitmaskSlice {
             output_name: None,
-            icon_size_x: self.icon_size_x,
-            icon_size_y: self.icon_size_y,
-            output_icon_pos_x: self.output_icon_pos_x,
-            output_icon_pos_y: self.output_icon_pos_y,
-            output_icon_size_x: self.icon_size_x,
-            output_icon_size_y: self.icon_size_y,
-            positions: CornerConfig(positions),
-            cut_position_x: self.icon_size_x / 2,
-            cut_position_y: self.icon_size_y / 2,
-            delay: self.delay.clone(),
+            icon_size: self.icon_size,
+            output_icon_pos: self.output_icon_pos,
+            output_icon_size: self.output_icon_size,
+            positions,
+            cut_pos: CutPosition {
+                x: self.icon_size.x / 2,
+                y: self.icon_size.y / 2,
+            },
+            animation: self.animation.clone(),
             produce_dirs: false,
             prefabs: None,
-            prefabs_overlays: None,
-            is_diagonal: true,
-            dmi_version: None,
+            prefab_overlays: None,
+            smooth_diagonally: true,
         };
 
         let (corners, prefabs) = bitmask_config.generate_corners(&mut img)?;
@@ -75,13 +71,16 @@ impl CutterModeConfig for BitmaskWindows {
         positions.insert(CornerType::Vertical, 8);
         positions.insert(CornerType::Flat, 9);
 
-        alt_config.positions = CornerConfig(positions);
+        alt_config.positions = Positions(positions);
 
         let (corners_alt, prefabs_alt) = alt_config.generate_corners(&mut img)?;
         let assembled_alt =
             alt_config.generate_icons(&corners_alt, &prefabs_alt, num_frames, SIZE_OF_DIAGONALS);
 
-        let delay = delay_repeat(&self.delay, num_frames as usize);
+        let delay = self
+            .animation
+            .clone()
+            .map(|x| repeat_for(&x.delays, num_frames as usize));
 
         let mut states = vec![];
         for signature in 0..SIZE_OF_DIAGONALS {
@@ -102,13 +101,13 @@ impl CutterModeConfig for BitmaskWindows {
                         .unwrap();
 
                     let upper_img =
-                        uncut_img.crop_imm(0, 0, self.output_icon_size_x, self.output_icon_size_y);
+                        uncut_img.crop_imm(0, 0, self.output_icon_size.x, self.output_icon_size.y);
                     upper_frames.push(upper_img);
                     let lower_img = uncut_img.crop_imm(
                         0,
-                        self.icon_size_y / 2,
-                        self.output_icon_size_x,
-                        self.output_icon_size_y,
+                        self.icon_size.y / 2,
+                        self.output_icon_size.x,
+                        self.output_icon_size.y,
                     );
                     lower_frames.push(lower_img);
                 }
@@ -135,20 +134,17 @@ impl CutterModeConfig for BitmaskWindows {
         }
 
         let icon = Icon {
-            width: self.output_icon_size_x,
-            height: self.output_icon_size_y,
+            width: self.output_icon_size.x,
+            height: self.output_icon_size.y,
             states,
             ..Default::default()
         };
 
-        Ok(vec![(None, icon)])
+        Ok(ProcessorPayload::from_icon(icon))
     }
 
-    fn debug_output<R: BufRead + Seek>(
-        &self,
-        _input: &mut R,
-        _output_dir: PathBuf,
-    ) -> ProcessorResult<DynamicImage> {
-        Ok(DynamicImage::new_rgb8(1, 1))
+    fn verify_config(&self) -> ProcessorResult<()> {
+        //TODO: Actually verify config
+        Ok(())
     }
 }

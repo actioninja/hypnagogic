@@ -109,6 +109,7 @@ impl Adjacency {
     #[must_use]
     pub fn rotate_dir(self, direction: Self) -> Self {
         match direction {
+            // 180 degree rotation
             Adjacency::N => match self {
                 Adjacency::N => Adjacency::S,
                 Adjacency::S => Adjacency::N,
@@ -120,6 +121,7 @@ impl Adjacency {
                 Adjacency::NW => Adjacency::SE,
                 _ => unimplemented!("Only single allowed"),
             },
+            // No rotation needed!
             Adjacency::S => self,
             // Counter-clockwise 90 degrees
             Adjacency::E => match self {
@@ -133,6 +135,7 @@ impl Adjacency {
                 Adjacency::NW => Adjacency::SW,
                 _ => unimplemented!("Only single allowed"),
             },
+            // Clockwise 90 degrees
             Adjacency::W => match self {
                 Adjacency::N => Adjacency::E,
                 Adjacency::S => Adjacency::W,
@@ -144,7 +147,9 @@ impl Adjacency {
                 Adjacency::NW => Adjacency::NE,
                 _ => unimplemented!("Only single allowed"),
             },
-            _ => unimplemented!("Rotating to diagonals doesn't make sense"),
+            _ => unimplemented!(
+                "Rotating to diagonals doesn't make sense. This is a programming error."
+            ),
         }
     }
 
