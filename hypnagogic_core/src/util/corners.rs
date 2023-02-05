@@ -1,8 +1,9 @@
 use enum_iterator::Sequence;
-use fixed_map::{Key, Map};
+use fixed_map::Key;
 use serde::{Deserialize, Serialize};
-use shrinkwraprs::Shrinkwrap;
 
+/// Represents a "side" of a given tile. Directions correspond to unrotated cardinal directions,
+/// with "North" pointing "upwards."
 #[derive(
     Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd, Debug, Sequence, Serialize, Deserialize, Key,
 )]
@@ -15,6 +16,7 @@ pub enum Side {
 }
 
 impl Side {
+    /// Matches enum variants to Byond bitfield directions
     #[must_use]
     pub const fn byond_dir(&self) -> u8 {
         match self {
@@ -25,11 +27,16 @@ impl Side {
         }
     }
 
+    /// Returns an array of directions in the order that byond specifies directions.
+    /// Yes, it is correct that "South" is done before North
     #[must_use]
     pub const fn dmi_cardinals() -> [Self; 4] {
         [Self::South, Self::North, Self::East, Self::West]
     }
 
+    /// Returns a boolean determining whether a Side is a "vertical" side. "North" and "South"
+    /// return true and vice versa. Maybe this is reversed, depends on whether you think of the side
+    /// as the line making it up or not.
     #[must_use]
     pub const fn is_vertical(self) -> bool {
         match self {
@@ -61,6 +68,7 @@ impl Corner {
         }
     }
 
+    /// Generates a Byond bitfield direction given the corner
     #[must_use]
     pub const fn byond_dir(self) -> u8 {
         let (horizontal, vertical) = self.sides_of_corner();
@@ -68,23 +76,7 @@ impl Corner {
     }
 }
 
-#[derive(Clone, PartialEq, Eq, Debug, Shrinkwrap, Deserialize, Serialize)]
-#[serde(transparent)]
-pub struct CornerData<T>(pub Map<Corner, T>);
-
-impl<T> Default for CornerData<T> {
-    fn default() -> Self {
-        CornerData(Map::new())
-    }
-}
-
-impl<T> CornerData<T> {
-    #[must_use]
-    pub fn new() -> Self {
-        Self::default()
-    }
-}
-
+/// Represents the five possible given states for a corner to be in when bitmask smoothing
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd, Debug, Deserialize, Serialize, Key)]
 #[serde(rename_all = "snake_case")]
 pub enum CornerType {
@@ -96,6 +88,8 @@ pub enum CornerType {
 }
 
 impl CornerType {
+    /// When only smoothing along cardinals, the "Flat" corner type is not used. This returns a
+    /// Vec of the enum variants except for `Flat`.
     #[must_use]
     pub fn cardinal() -> Vec<Self> {
         vec![
@@ -106,6 +100,7 @@ impl CornerType {
         ]
     }
 
+    /// Returns a Vec of all enum variants
     #[must_use]
     pub fn diagonal() -> Vec<Self> {
         vec![

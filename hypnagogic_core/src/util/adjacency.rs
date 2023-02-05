@@ -45,6 +45,7 @@ impl Adjacency {
     }
 
     /// Gets the sides for a given corner adjacency
+    /// Adjacency is always returned in the format of `(Vertical, Horizontal)`
     /// # Panics
     /// Panics when a non-corner adjacency is passed in
     #[must_use]
