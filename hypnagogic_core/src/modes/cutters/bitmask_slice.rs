@@ -164,8 +164,13 @@ impl CutterModeConfig for BitmaskSlice {
                 icon_state_frames.extend(assembled[&rotated_sig].clone());
             }
 
+            let name = if let Some(prefix_name) = &self.output_name {
+                format!("{prefix_name}-{signature}")
+            } else {
+                format!("{signature}")
+            };
             icon_states.push(IconState {
-                name: format!("{}", signature),
+                name,
                 dirs: icon_directions.len() as u8,
                 frames: num_frames,
                 images: icon_state_frames,
