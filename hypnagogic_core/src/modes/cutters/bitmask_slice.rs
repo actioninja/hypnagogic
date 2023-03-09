@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, HashMap};
 use std::io::{BufRead, Seek};
 use std::path::PathBuf;
 
-use dmi::icon::{Icon, IconState};
+use dmi::icon::{DmiVersion, Icon, IconState};
 use enum_iterator::all;
 use fixed_map::Map;
 use image::{imageops, DynamicImage, GenericImageView, ImageFormat};
@@ -180,7 +180,7 @@ impl CutterModeConfig for BitmaskSlice {
         }
 
         let output_icon = Icon {
-            version: Default::default(),
+            version: DmiVersion::default(),
             width: self.output_icon_size_x,
             height: self.output_icon_size_y,
             states: icon_states,
