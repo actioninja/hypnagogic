@@ -133,6 +133,7 @@ fn main() -> Result<()> {
 }
 
 /// Gnarly, effectful function hoisted out here so that I can still use ? but parallelize with rayon
+#[allow(clippy::result_large_err)]
 fn process_icon(
     flatten: bool,
     debug: bool,

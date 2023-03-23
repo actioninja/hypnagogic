@@ -308,6 +308,9 @@ impl BitmaskSlice {
         assembled
     }
 
+    /// Generates debug outputs for bitmask slice
+    /// # Panics
+    /// Shouldn't panic, unless the passed in corners are malformed
     #[must_use]
     pub fn generate_debug_icons(&self, corners: &CornerPayload) -> Vec<NamedIcon> {
         let mut out = vec![];
