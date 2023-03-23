@@ -287,8 +287,9 @@ dependencies = [
 
 [[package]]
 name = "dmi"
-version = "0.1.4"
-source = "git+https://github.com/actioninja/dmi-rust.git?branch=feature-gates#38d920bd3580816279bcc6f8f89e3e32e9e24b1a"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "564a4ad51980f25782945fe0f986bf97f3c55a340c093626f557ccbe7b2a3273"
 dependencies = [
  "deflate",
  "image",

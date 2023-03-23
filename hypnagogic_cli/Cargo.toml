@@ -10,7 +10,7 @@ license = "AGPL"
 [dependencies]
 anyhow = "1.0"
 clap = { version = "4.0", features = ["suggestions", "deprecated", "derive", "wrap_help"] }
-dmi = { git = "https://github.com/actioninja/dmi-rust.git", branch = "feature-gates" }
+dmi = "0.2"
 dont_disappear = "3.0"
 image = { version = "0.24", default-features = false, features = ["png", "gif"] }
 rayon = "1.5"
