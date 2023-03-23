@@ -15,16 +15,10 @@ impl Default for IconSize {
     }
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize, Default)]
 pub struct OutputIconPosition {
     pub x: u32,
     pub y: u32,
-}
-
-impl Default for OutputIconPosition {
-    fn default() -> Self {
-        Self { x: 0, y: 0 }
-    }
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
@@ -57,7 +51,7 @@ pub struct Positions(pub Map<CornerType, u32>);
 impl Positions {
     #[must_use]
     pub fn get(&self, key: CornerType) -> Option<u32> {
-        self.0.get(key).map(|x| *x)
+        self.0.get(key).copied()
     }
 }
 
@@ -196,7 +190,7 @@ pub struct SlicePoint(pub Map<Side, u32>);
 
 impl SlicePoint {
     pub fn get(&self, key: Side) -> Option<u32> {
-        self.0.get(key).map(|x| *x)
+        self.0.get(key).copied()
     }
 }
 
