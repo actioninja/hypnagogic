@@ -13,16 +13,11 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
       - name: Install Rust Toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+        uses: dtolnay/rust-toolchain@stable
       - name: Check Cache
         uses: Swatinem/rust-cache@v2
       - name: Build Windows Release
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release
+        run: cargo build --release
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
@@ -35,16 +30,11 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
       - name: Install Rust Toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+        uses: dtolnay/rust-toolchain@stable
       - name: Check Cache
         uses: Swatinem/rust-cache@v2
       - name: Build Linux Release
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release
+        run: cargo build --release
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
