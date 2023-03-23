@@ -308,6 +308,7 @@ impl BitmaskSlice {
         assembled
     }
 
+    #[must_use]
     pub fn generate_debug_icons(&self, corners: &CornerPayload) -> Vec<NamedIcon> {
         let mut out = vec![];
         let mut corners_image =

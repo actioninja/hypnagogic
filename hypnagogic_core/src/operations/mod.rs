@@ -109,6 +109,7 @@ pub enum ProcessorPayload {
 }
 
 impl ProcessorPayload {
+    #[must_use]
     pub fn from_icon(icon: Icon) -> Self {
         Self::Single(Box::new(OutputImage::Dmi(icon)))
     }

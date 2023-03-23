@@ -23,7 +23,7 @@ impl From<&str> for Side {
             "south" => Self::South,
             "east" => Self::East,
             "west" => Self::West,
-            _ => panic!("Invalid side: {}", s),
+            _ => panic!("Invalid side: {s}"),
         }
     }
 }
@@ -121,7 +121,7 @@ impl From<&str> for CornerType {
             "horizontal" => Self::Horizontal,
             "vertical" => Self::Vertical,
             "flat" => Self::Flat,
-            _ => panic!("Invalid String: {}", value),
+            _ => panic!("Invalid String: {value}"),
         }
     }
 }

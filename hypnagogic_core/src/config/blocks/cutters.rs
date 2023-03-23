@@ -189,6 +189,7 @@ pub struct Animation {
 pub struct SlicePoint(pub Map<Side, u32>);
 
 impl SlicePoint {
+    #[must_use]
     pub fn get(&self, key: Side) -> Option<u32> {
         self.0.get(key).copied()
     }
