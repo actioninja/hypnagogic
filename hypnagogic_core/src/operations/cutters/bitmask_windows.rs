@@ -59,6 +59,7 @@ impl IconOperationConfig for BitmaskWindows {
             prefabs: None,
             prefab_overlays: None,
             smooth_diagonally: true,
+            map_icon: None,
         };
 
         let (corners, prefabs) = bitmask_config.generate_corners(&mut img)?;

@@ -1,6 +1,7 @@
 use std::io::{BufRead, Seek};
 
 use crate::config::blocks::cutters::SlicePoint;
+use crate::generation::icon::generate_map_icon;
 use dmi::icon::{Icon, IconState};
 use enum_iterator::all;
 use image::{imageops, DynamicImage, GenericImageView, ImageFormat};
@@ -140,6 +141,17 @@ impl IconOperationConfig for BitmaskDirectionalVis {
                 images: icon_state_frames,
                 delay: delay.clone(),
 
+                ..Default::default()
+            });
+        }
+
+        if let Some(map_icon) = &self.bitmask_slice_config.map_icon {
+            let icon = generate_map_icon(map_icon);
+            icon_states.push(IconState {
+                name: map_icon.icon_state_name.clone(),
+                dirs: 1,
+                frames: 1,
+                images: vec![icon],
                 ..Default::default()
             });
         }

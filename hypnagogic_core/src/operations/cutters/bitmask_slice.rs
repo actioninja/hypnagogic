@@ -5,6 +5,8 @@ use crate::config::blocks::cutters::{
     Animation, CutPosition, IconSize, OutputIconPosition, OutputIconSize, Positions,
     PrefabOverlays, Prefabs,
 };
+use crate::config::blocks::generators::MapIcon;
+use crate::generation::icon::generate_map_icon;
 use dmi::icon::{Icon, IconState};
 use enum_iterator::all;
 use fixed_map::Map;
@@ -54,6 +56,9 @@ pub struct BitmaskSlice {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(default)]
     pub prefab_overlays: Option<PrefabOverlays>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
+    pub map_icon: Option<MapIcon>,
 }
 
 impl IconOperationConfig for BitmaskSlice {
@@ -86,7 +91,8 @@ impl IconOperationConfig for BitmaskSlice {
         let assembled = self.generate_icons(&corners, &prefabs, num_frames, possible_states);
 
         // Second phase: map to byond icon states and produce dirs if need
-        // Even though this is the same loop as above, all states need to be generated first for the
+        // Even though this is the same loop as what happenes in generate_icons,
+        // all states need to be generated first for the
         // Rotation to work correctly, so it must be done as a second loop.
         let mut icon_states = vec![];
 
@@ -117,6 +123,17 @@ impl IconOperationConfig for BitmaskSlice {
                 frames: num_frames,
                 images: icon_state_frames,
                 delay: delay.clone(),
+                ..Default::default()
+            });
+        }
+
+        if let Some(map_icon) = &self.map_icon {
+            let icon = generate_map_icon(map_icon);
+            icon_states.push(IconState {
+                name: map_icon.icon_state_name.clone(),
+                dirs: 1,
+                frames: 1,
+                images: vec![icon],
                 ..Default::default()
             });
         }

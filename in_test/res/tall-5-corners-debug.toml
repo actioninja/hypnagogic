@@ -1,1 +1,10 @@
 template = "bitmask/slice-tallwalls-directionalvis"
+
+[map_icon]
+icon_state_name = "map_icon"
+height = 32
+width = 32
+base_color = "#FF0000"
+text = "HI POTATO"
+text_color = "#00FF00"
+outer_border = { style = "dotted", color = "#0000FF" }
