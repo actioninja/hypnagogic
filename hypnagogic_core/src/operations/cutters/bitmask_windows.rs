@@ -45,7 +45,10 @@ impl IconOperationConfig for BitmaskWindows {
             output_name: None,
             icon_size: self.icon_size,
             output_icon_pos: self.output_icon_pos,
-            output_icon_size: self.output_icon_size,
+            output_icon_size: OutputIconSize {
+                x: self.output_icon_size.x,
+                y: self.output_icon_size.y * 2,
+            },
             positions,
             cut_pos: CutPosition {
                 x: self.icon_size.x / 2,
