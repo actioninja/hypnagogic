@@ -25,6 +25,7 @@ pub fn dedupe_frames(mut icon_state : IconState) -> IconState {
             if previous == image_bytes {
                 previous_bytes = Some(previous);
                 frame_count -= 1;
+                delay_index += 1;
                 current_delay += current_delays[delay_index];
                 continue;
             }
