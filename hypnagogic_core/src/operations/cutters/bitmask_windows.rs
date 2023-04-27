@@ -4,6 +4,7 @@ use crate::operations::{IconOperationConfig, OperationMode, ProcessorPayload};
 use crate::util::adjacency::Adjacency;
 use crate::util::corners::CornerType;
 use crate::util::repeat_for;
+use crate::util::icon_ops::dedupe_frames;
 use dmi::icon::{Icon, IconState};
 
 use fixed_map::Map;
@@ -115,22 +116,22 @@ impl IconOperationConfig for BitmaskWindows {
                     lower_frames.push(lower_img);
                 }
 
-                states.push(IconState {
+                states.push(dedupe_frames(IconState {
                     name: format!("{prefix}{signature}-upper"),
                     dirs: 1,
                     frames: num_frames,
                     images: upper_frames,
                     delay: delay.clone(),
                     ..Default::default()
-                });
-                states.push(IconState {
+                }));
+                states.push(dedupe_frames(IconState {
                     name: format!("{prefix}{signature}-lower"),
                     dirs: 1,
                     frames: num_frames,
                     images: lower_frames,
                     delay: delay.clone(),
                     ..Default::default()
-                });
+                }));
             };
             states_from_assembled("", &assembled);
             states_from_assembled("alt-", &assembled_alt);
