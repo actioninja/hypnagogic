@@ -5,10 +5,8 @@ use crate::util::color::fill_image_color;
 use image::DynamicImage;
 
 #[must_use]
-pub fn generate_map_icon(args: &MapIcon) -> DynamicImage {
+pub fn generate_map_icon(height: u32, width: u32, args: &MapIcon) -> DynamicImage {
     let MapIcon {
-        height,
-        width,
         base_color,
         text,
         text_color,
@@ -18,8 +16,8 @@ pub fn generate_map_icon(args: &MapIcon) -> DynamicImage {
         outer_border,
         ..
     } = args;
-    let mut image = DynamicImage::new_rgba8(*width, *height);
-    draw_rect(&mut image, 0, 0, *width, *height, *base_color);
+    let mut image = DynamicImage::new_rgba8(width, height);
+    draw_rect(&mut image, 0, 0, width, height, *base_color);
     // draw the text block
 
     if let Some(text) = text {
@@ -39,7 +37,7 @@ pub fn generate_map_icon(args: &MapIcon) -> DynamicImage {
 
     // outer border
     if let Some(border) = outer_border {
-        draw_border(&mut image, 0, 0, *width, *height, *border);
+        draw_border(&mut image, 0, 0, width, height, *border);
     }
     // inner border
     if let Some(border) = inner_border {

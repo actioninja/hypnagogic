@@ -40,8 +40,6 @@ fn default_alignment() -> Alignment {
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct MapIcon {
     pub icon_state_name: String,
-    pub height: u32,
-    pub width: u32,
     #[serde(default = "white")]
     pub base_color: Color,
     #[serde(default)]
@@ -62,8 +60,6 @@ impl Default for MapIcon {
     fn default() -> Self {
         Self {
             icon_state_name: "map_icon".to_string(),
-            height: 32,
-            width: 32,
             base_color: Color::new(255, 255, 255, 255),
             text: Some("DEF".to_string()),
             text_color: Color::new(0, 0, 0, 255),

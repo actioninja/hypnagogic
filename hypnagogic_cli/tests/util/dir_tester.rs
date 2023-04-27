@@ -42,7 +42,7 @@ macro_rules! test_dir {
     ($dir:literal) => {
         ::paste::paste! {
             #[test]
-            fn [<regression_dir_ $dir>]() {
+            fn [<dir_ $dir>]() {
                 let dir = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/", "test_files/", $dir);
                 let dir = std::path::Path::new(dir);
                 let mut tester = DirTester::new(dir);
