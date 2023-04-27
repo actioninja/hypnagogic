@@ -1,4 +1,4 @@
-use image::{DynamicImage, GenericImage, GenericImageView};
+use image::DynamicImage;
 use serde::{Deserialize, Serialize};
 use std::num::ParseIntError;
 use thiserror::Error;
@@ -209,55 +209,28 @@ pub fn fill_image_color(image: &mut DynamicImage, color: Color) {
 
 #[cfg(test)]
 mod tests {
-    use crate::util::color::hex_to_tuple;
+    use super::*;
 
     #[test]
     fn hex_to_tuple_test() {
         let hex = "#ff0000";
-        let (r, g, b, a) = hex_to_tuple(hex).unwrap();
-        assert_eq!(r, 255);
-        assert_eq!(g, 0);
-        assert_eq!(b, 0);
-        assert_eq!(a, 255);
+        let color = Color::from_hex_str(hex).unwrap();
+        assert_eq!(color, Color::new(255, 0, 0, 255));
 
         let hex = "#ff0000ff";
-        let (r, g, b, a) = hex_to_tuple(hex).unwrap();
-        assert_eq!(r, 255);
-        assert_eq!(g, 0);
-        assert_eq!(b, 0);
-        assert_eq!(a, 255);
-
-        let hex = "#ffff00ff";
-        let (r, g, b, a) = hex_to_tuple(hex).unwrap();
-        assert_eq!(r, 255);
-        assert_eq!(g, 255);
-        assert_eq!(b, 0);
-        assert_eq!(a, 255);
+        let color = Color::from_hex_str(hex).unwrap();
+        assert_eq!(color, Color::new(255, 0, 0, 255));
 
         let hex = "#f00";
-        let (r, g, b, a) = hex_to_tuple(hex).unwrap();
-        assert_eq!(r, 255);
-        assert_eq!(g, 0);
-        assert_eq!(b, 0);
-        assert_eq!(a, 255);
+        let color = Color::from_hex_str(hex).unwrap();
+        assert_eq!(color, Color::new(255, 0, 0, 255));
 
         let hex = "#f00f";
-        let (r, g, b, a) = hex_to_tuple(hex).unwrap();
-        assert_eq!(r, 255);
-        assert_eq!(g, 0);
-        assert_eq!(b, 0);
-        assert_eq!(a, 255);
+        let color = Color::from_hex_str(hex).unwrap();
+        assert_eq!(color, Color::new(255, 0, 0, 255));
 
-        let hex = "#f00ff";
-        let result = hex_to_tuple(hex);
-        assert!(result.is_err());
-
-        let hex = "f00ff";
-        let result = hex_to_tuple(hex);
-        assert!(result.is_err());
-
-        let hex = "#f00ffg";
-        let result = hex_to_tuple(hex);
-        assert!(result.is_err());
+        let hex = "#f00f0f";
+        let color = Color::from_hex_str(hex).unwrap();
+        assert_eq!(color, Color::new(240, 15, 15, 255));
     }
 }

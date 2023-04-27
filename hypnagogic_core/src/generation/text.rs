@@ -38,7 +38,7 @@ pub fn generate_text_line(text_to_gen: &str) -> DynamicImage {
     let height = CHARACTER_HEIGHT;
     let mut image = DynamicImage::new_rgba8(width, height);
     let mut pos = 0;
-    for (i, char) in text_to_gen.chars().enumerate() {
+    for char in text_to_gen.chars() {
         if char == ' ' {
             pos += 2;
             continue;

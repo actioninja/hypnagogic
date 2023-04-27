@@ -1,8 +1,8 @@
 use crate::config::blocks::generators::{MapIcon, Position};
-use crate::generation::rect::{draw_border, draw_rect, Border};
-use crate::generation::text::{generate_text_block, generate_text_line, Alignment};
+use crate::generation::rect::{draw_border, draw_rect};
+use crate::generation::text::generate_text_block;
 use crate::util::color::fill_image_color;
-use image::{DynamicImage, GenericImage};
+use image::DynamicImage;
 
 #[must_use]
 pub fn generate_map_icon(args: &MapIcon) -> DynamicImage {
@@ -23,7 +23,7 @@ pub fn generate_map_icon(args: &MapIcon) -> DynamicImage {
     // draw the text block
 
     if let Some(text) = text {
-        let mut text_image = generate_text_block(&text, *text_alignment);
+        let mut text_image = generate_text_block(text, *text_alignment);
         fill_image_color(&mut text_image, *text_color);
         let text_width = text_image.width();
         let text_height = text_image.height();
@@ -51,5 +51,4 @@ pub fn generate_map_icon(args: &MapIcon) -> DynamicImage {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::generation::rect::BorderStyle;
 }
