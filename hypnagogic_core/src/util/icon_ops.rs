@@ -5,7 +5,7 @@ pub fn dedupe_frames(mut icon_state : IconState) -> IconState {
     if icon_state.frames <= 1 {
         return icon_state;
     }
-    let current_delays = match icon_state.clone().delay {
+    let current_delays = match icon_state.delay {
         Some(delay) => delay,
         None => return icon_state 
     };
@@ -19,7 +19,7 @@ pub fn dedupe_frames(mut icon_state : IconState) -> IconState {
     // List of concrete delays. We'll push to this once we're sure we're happy with the current value
     let mut new_delays = Vec::new();
     let mut new_images = Vec::new();
-    for image in icon_state.clone().images {
+    for image in icon_state.images {
         let image_bytes = image.clone().into_bytes();
         if let Some(previous) = previous_bytes {
             if previous == image_bytes {
