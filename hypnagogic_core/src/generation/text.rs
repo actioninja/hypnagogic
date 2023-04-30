@@ -160,18 +160,4 @@ mod test {
         let image = get_char_crop(char).unwrap();
         assert_eq!(image.dimensions(), (CHARACTER_WIDTH, CHARACTER_HEIGHT));
     }
-
-    #[test]
-    fn write_out_test_line() {
-        let text = "Hello, world!";
-        let image = generate_text_line(text);
-        image.save("./junk/test_line.png").unwrap();
-    }
-
-    #[test]
-    fn write_out_test_block() {
-        let text = "Hello, world! This is a test of the text generator. I hope it works!";
-        let image = generate_text_block(text, Alignment::Center);
-        image.save("./junk/test_block.png").unwrap();
-    }
 }

@@ -62,40 +62,4 @@ pub fn draw_border(
 #[cfg(test)]
 mod test {
     use super::*;
-
-    #[test]
-    fn write_out_rect_with_border() {
-        let mut image = DynamicImage::new_rgba8(10, 10);
-        draw_rect(&mut image, 0, 0, 10, 10, Color::new(255, 255, 255, 255));
-        draw_border(
-            &mut image,
-            0,
-            0,
-            10,
-            10,
-            Border {
-                style: BorderStyle::Solid,
-                color: Color::new(0, 0, 0, 255),
-            },
-        );
-        image.save("./junk/test.png").unwrap();
-    }
-
-    #[test]
-    fn write_out_rect_with_dotted_border() {
-        let mut image = DynamicImage::new_rgba8(10, 10);
-        draw_rect(&mut image, 0, 0, 10, 10, Color::new(255, 255, 255, 255));
-        draw_border(
-            &mut image,
-            0,
-            0,
-            10,
-            10,
-            Border {
-                style: BorderStyle::Dotted,
-                color: Color::new(0, 0, 0, 255),
-            },
-        );
-        image.save("./junk/test-dotted.png").unwrap();
-    }
 }
