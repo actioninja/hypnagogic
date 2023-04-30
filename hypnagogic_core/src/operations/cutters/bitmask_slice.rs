@@ -129,7 +129,8 @@ impl IconOperationConfig for BitmaskSlice {
 
         if let Some(map_icon) = &self.map_icon {
             let icon =
-                generate_map_icon(self.output_icon_size.x, self.output_icon_size.y, map_icon);
+                generate_map_icon(self.output_icon_size.x, self.output_icon_size.y, map_icon)
+                    .unwrap();
             icon_states.push(IconState {
                 name: map_icon.icon_state_name.clone(),
                 dirs: 1,

@@ -1,9 +1,11 @@
 use crate::editor::ActiveFileData;
 use hypnagogic_core::config::read_config;
+use hypnagogic_core::operations::IconOperation;
 use serde::{Deserialize, Serialize};
 use std::io::Write;
 use std::path::PathBuf;
 use std::{env, fs};
+use toml::Value;
 
 #[derive(Serialize, Deserialize)]
 #[serde(default)]
@@ -64,12 +66,12 @@ impl Hypnastic {
 
         let config_file = running_dir.join("hypnastic_conf.toml");
         if config_file.exists() {
-            let config = std::fs::read_to_string(config_file)?;
+            let config = fs::read_to_string(config_file)?;
             let config: HypnasticConfig = toml::from_str(&config)?;
             Ok(config)
         } else {
             let config = HypnasticConfig::default();
-            std::fs::write(config_file, toml::to_string(&config)?)?;
+            fs::write(config_file, toml::to_string(&config)?)?;
             Ok(config)
         }
     }
@@ -77,7 +79,7 @@ impl Hypnastic {
     pub fn save_config(&self) -> Result<(), Box<dyn std::error::Error>> {
         let running_dir = env::current_dir()?;
         let config_file = running_dir.join("hypnastic_conf.toml");
-        std::fs::write(config_file, toml::to_string(&self.config)?)?;
+        fs::write(config_file, toml::to_string(&self.config)?)?;
         Ok(())
     }
 
@@ -88,7 +90,8 @@ impl Hypnastic {
             .add_filter("Hypnogogic Config File", &["toml"])
             .pick_file();
         if let Some(file) = found_file {
-            let file = fs::File::open(file).unwrap();
+            let file_string = fs::read_to_string(&file).unwrap();
+            let toml: Value = toml::from_str(&file_string).unwrap();
         }
     }
 

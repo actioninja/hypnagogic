@@ -7,9 +7,10 @@ edition = "2021"
 
 [dependencies]
 egui = "0.21"
-rfd = "0.11"
 egui_dock = "0.5"
 eframe = { version = "0.21", features = ["default_fonts", "glow", "persistence"] }
+image = "0.24"
+rfd = "0.11"
 serde = { version = "1.0", features = ["derive"] }
 toml = "0.7"
 toml_edit = "0.19"
