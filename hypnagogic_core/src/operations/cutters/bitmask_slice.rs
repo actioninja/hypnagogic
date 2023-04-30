@@ -91,7 +91,7 @@ impl IconOperationConfig for BitmaskSlice {
         let assembled = self.generate_icons(&corners, &prefabs, num_frames, possible_states);
 
         // Second phase: map to byond icon states and produce dirs if need
-        // Even though this is the same loop as what happenes in generate_icons,
+        // Even though this is the same loop as what happens in generate_icons,
         // all states need to be generated first for the
         // Rotation to work correctly, so it must be done as a second loop.
         let mut icon_states = vec![];

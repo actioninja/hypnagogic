@@ -1,11 +1,15 @@
 use crate::config::blocks::generators::{MapIcon, Position};
+use crate::generation::error::GenerationError;
 use crate::generation::rect::{draw_border, draw_rect};
 use crate::generation::text::generate_text_block;
 use crate::util::color::fill_image_color;
 use image::DynamicImage;
 
-#[must_use]
-pub fn generate_map_icon(height: u32, width: u32, args: &MapIcon) -> DynamicImage {
+pub fn generate_map_icon(
+    height: u32,
+    width: u32,
+    args: &MapIcon,
+) -> Result<DynamicImage, GenerationError> {
     let MapIcon {
         base_color,
         text,
@@ -22,6 +26,15 @@ pub fn generate_map_icon(height: u32, width: u32, args: &MapIcon) -> DynamicImag
 
     if let Some(text) = text {
         let mut text_image = generate_text_block(text, *text_alignment);
+        if text_image.width() > (width - 4) {
+            return Err(GenerationError::TextTooLong(text.clone(), (width - 4 / 4)));
+        }
+        if text_image.height() > (height - 4) {
+            return Err(GenerationError::TooManyLines(
+                text_image.height(),
+                (height - 4) / 6,
+            ));
+        }
         fill_image_color(&mut text_image, *text_color);
         let text_width = text_image.width();
         let text_height = text_image.height();
@@ -43,7 +56,7 @@ pub fn generate_map_icon(height: u32, width: u32, args: &MapIcon) -> DynamicImag
     if let Some(border) = inner_border {
         draw_border(&mut image, 1, 1, width - 2, height - 2, *border);
     }
-    image
+    Ok(image)
 }
 
 #[cfg(test)]
