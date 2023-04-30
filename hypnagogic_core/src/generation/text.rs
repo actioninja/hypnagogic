@@ -46,7 +46,7 @@ pub fn generate_text_line(text_to_gen: &str) -> DynamicImage {
         let x = pos;
         pos += is_char_narrow(char).unwrap_or(CHARACTER_WIDTH) + 1;
         let y = 0;
-        let char_image = get_char_crop(char).unwrap();
+        let char_image = get_char_crop(char).expect("Invalid character");
         image
             .copy_from(&char_image, x, y)
             .expect("Failed to copy (bad image?)");
@@ -66,6 +66,7 @@ pub enum Alignment {
 /// generates a block of text
 /// splits the text into lines by spaces and generates each line
 /// then combines the lines into a single image
+#[must_use]
 pub fn generate_text_block(text_to_gen: &str, alignment: Alignment) -> DynamicImage {
     let split: Vec<&str> = text_to_gen.split(' ').collect();
     let images: Vec<DynamicImage> = split.iter().map(|&s| generate_text_line(s)).collect();

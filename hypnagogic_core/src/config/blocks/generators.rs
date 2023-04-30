@@ -26,6 +26,7 @@ fn bottom_right() -> Position {
     Position::BottomRight
 }
 
+#[allow(clippy::unnecessary_wraps)] // wrap is needed for serde default
 fn default_outer_border() -> Option<Border> {
     Some(Border {
         style: BorderStyle::Solid,
