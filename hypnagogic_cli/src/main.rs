@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 use std::process::exit;
 use std::time::Instant;
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use clap::Parser;
 use rayon::prelude::*;
 use tracing::{debug, info, Level};
@@ -84,6 +84,10 @@ fn main() -> Result<()> {
             .finish();
         tracing::subscriber::set_global_default(subscriber)?;
     };
+
+    if !Path::new(&input).exists() {
+        return Err(anyhow!("Input path does not exist!"));
+    }
 
     let files_to_process: Vec<PathBuf> = if metadata(&input)?.is_file() {
         vec![Path::new(&input).to_path_buf()]

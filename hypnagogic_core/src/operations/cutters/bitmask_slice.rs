@@ -101,10 +101,11 @@ impl IconOperationConfig for BitmaskSlice {
             .clone()
             .map(|x| repeat_for(&x.delays, num_frames as usize));
 
-        for signature in 0..possible_states {
+        let states_to_gen = (0..possible_states)
+            .map(|x| Adjacency::from_bits(x as u8).unwrap())
+            .filter(Adjacency::ref_has_no_orphaned_corner);
+        for adjacency in states_to_gen {
             let mut icon_state_frames = vec![];
-
-            let adjacency = Adjacency::from_bits(signature as u8).unwrap();
 
             for icon_state_dir in &icon_directions {
                 let rotated_sig = adjacency.rotate_to(*icon_state_dir);
@@ -112,6 +113,7 @@ impl IconOperationConfig for BitmaskSlice {
                 icon_state_frames.extend(assembled[&rotated_sig].clone());
             }
 
+            let signature = adjacency.bits();
             let name = if let Some(prefix_name) = &self.output_name {
                 format!("{prefix_name}-{signature}")
             } else {

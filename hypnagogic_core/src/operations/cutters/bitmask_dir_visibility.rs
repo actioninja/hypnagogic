@@ -60,6 +60,9 @@ impl IconOperationConfig for BitmaskDirectionalVis {
         let mut icon_states = vec![];
 
         for (adjacency, images) in &assembled {
+            if !adjacency.has_no_orphaned_corner() {
+                continue;
+            }
             for side in Side::dmi_cardinals() {
                 let mut icon_state_frames = vec![];
                 let slice_info = self.get_side_cuts(side);
