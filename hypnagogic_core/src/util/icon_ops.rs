@@ -1,45 +1,51 @@
 use dmi::icon::IconState;
+use image::DynamicImage;
 
 // Removes duplicate frames from the icon state's animation, if it has any
-pub fn dedupe_frames(mut icon_state: IconState) -> IconState {
+pub fn dedupe_frames(icon_state: IconState) -> IconState {
     if icon_state.frames <= 1 {
         return icon_state;
     }
-    let current_delays = match icon_state.delay {
-        Some(delay) => delay,
-        None => return icon_state,
+    let Some(current_delays) = &icon_state.delay else {
+        return icon_state;
     };
 
+    struct AccumulatedAnim {
+        delays: Vec<f32>,
+        frames: Vec<DynamicImage>,
+        working_index: u32,
+    }
+    
     // As we walk through the frames in this icon state, we're going to keep track of the ones that
     // Are duplicates, and "dedupe" them by simply adding extra frame delay and removing the extra frame
-    let mut delay_index = 0;
-    let mut current_delay = current_delays[delay_index];
-    let mut frame_count = icon_state.frames;
-    let mut previous_bytes = None;
-    // List of concrete delays. We'll push to this once we're sure we're happy with the current value
-    let mut new_delays = Vec::new();
-    let mut new_images = Vec::new();
-    for image in icon_state.images {
-        let image_bytes = image.clone().into_bytes();
-        if let Some(previous) = previous_bytes {
-            if previous == image_bytes {
-                previous_bytes = Some(previous);
-                frame_count -= 1;
-                delay_index += 1;
-                current_delay += current_delays[delay_index];
-                continue;
+    let deduped_anim = current_delays.iter().zip(icon_state.images.into_iter())
+        .fold(AccumulatedAnim {
+            delays: Vec::new(), 
+            frames: Vec::new(),
+            working_index: 0,
+        }, |mut acc, elem| {
+            let (&current_delay, current_frame) = elem;
+            if acc.frames.len() == 0 {
+                acc.delays.push(current_delay);
+                acc.frames.push(current_frame);
+                return acc
             }
-            new_delays.push(current_delay);
-            delay_index += 1;
-            current_delay = current_delays[delay_index];
-        }
-        previous_bytes = Some(image_bytes);
-        new_images.push(image);
-    }
-    new_delays.push(current_delay);
-
-    icon_state.frames = frame_count;
-    icon_state.images = new_images;
-    icon_state.delay = Some(new_delays);
-    return icon_state;
+            let current_index = acc.working_index;
+            if acc.frames[current_index as usize] == current_frame {
+                acc.delays[current_index as usize] += current_delay;
+            }
+            else {
+                acc.delays.push(current_delay);
+                acc.frames.push(current_frame);
+                acc.working_index += 1;
+            }
+            acc
+        });
+    
+    return IconState {
+        frames: deduped_anim.working_index + 1,
+        images: deduped_anim.frames,
+        delay: Some(deduped_anim.delays),
+        ..icon_state
+    };
 }
