@@ -60,6 +60,7 @@ impl IconOperationConfig for BitmaskWindows {
             prefabs: None,
             prefab_overlays: None,
             smooth_diagonally: true,
+            map_icon: None,
         };
 
         let (corners, prefabs) = bitmask_config.generate_corners(&mut img)?;
@@ -87,9 +88,11 @@ impl IconOperationConfig for BitmaskWindows {
             .map(|x| repeat_for(&x.delays, num_frames as usize));
 
         let mut states = vec![];
-        for signature in 0..SIZE_OF_DIAGONALS {
-            let adjacency = Adjacency::from_bits(signature as u8).unwrap();
 
+        let states_to_gen = (0..SIZE_OF_DIAGONALS)
+            .map(|x| Adjacency::from_bits(x as u8).unwrap())
+            .filter(Adjacency::ref_has_no_orphaned_corner);
+        for adjacency in states_to_gen {
             let mut states_from_assembled = |prefix: &str,
                                              assembled_set: &BTreeMap<
                 Adjacency,
@@ -116,6 +119,7 @@ impl IconOperationConfig for BitmaskWindows {
                     lower_frames.push(lower_img);
                 }
 
+                let signature = adjacency.bits();
                 states.push(dedupe_frames(IconState {
                     name: format!("{prefix}{signature}-upper"),
                     dirs: 1,

@@ -2,6 +2,7 @@ use toml::map::Map;
 use toml::Value;
 
 pub mod adjacency;
+pub mod color;
 pub mod corners;
 pub mod icon_ops;
 

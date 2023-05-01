@@ -1,5 +1,6 @@
 [workspace]
 members = [
     "hypnagogic_cli",
-    "hypnagogic_core"
+    "hypnagogic_core",
+    "hypnastic"
 ]

@@ -1,6 +1,7 @@
 use std::io::{BufRead, Seek};
 
 use crate::config::blocks::cutters::SlicePoint;
+use crate::generation::icon::generate_map_icon;
 use dmi::icon::{Icon, IconState};
 use enum_iterator::all;
 use image::{imageops, DynamicImage, GenericImageView, ImageFormat};
@@ -60,6 +61,9 @@ impl IconOperationConfig for BitmaskDirectionalVis {
         let mut icon_states = vec![];
 
         for (adjacency, images) in &assembled {
+            if !adjacency.has_no_orphaned_corner() {
+                continue;
+            }
             for side in Side::dmi_cardinals() {
                 let mut icon_state_frames = vec![];
                 let slice_info = self.get_side_cuts(side);
@@ -143,6 +147,22 @@ impl IconOperationConfig for BitmaskDirectionalVis {
 
                 ..Default::default()
             }));
+        }
+
+        if let Some(map_icon) = &self.bitmask_slice_config.map_icon {
+            let icon = generate_map_icon(
+                self.bitmask_slice_config.output_icon_size.x,
+                self.bitmask_slice_config.output_icon_size.y,
+                map_icon,
+            )
+            .unwrap();
+            icon_states.push(IconState {
+                name: map_icon.icon_state_name.clone(),
+                dirs: 1,
+                frames: 1,
+                images: vec![icon],
+                ..Default::default()
+            });
         }
 
         let out_icon = Icon {

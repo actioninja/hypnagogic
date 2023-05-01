@@ -1,0 +1,4 @@
+template = "bitmask/slice-32x32"
+
+[cut_pos]
+y = 5

@@ -5,6 +5,8 @@ use crate::config::blocks::cutters::{
     Animation, CutPosition, IconSize, OutputIconPosition, OutputIconSize, Positions,
     PrefabOverlays, Prefabs,
 };
+use crate::config::blocks::generators::MapIcon;
+use crate::generation::icon::generate_map_icon;
 use dmi::icon::{Icon, IconState};
 use enum_iterator::all;
 use fixed_map::Map;
@@ -55,6 +57,9 @@ pub struct BitmaskSlice {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(default)]
     pub prefab_overlays: Option<PrefabOverlays>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
+    pub map_icon: Option<MapIcon>,
 }
 
 impl IconOperationConfig for BitmaskSlice {
@@ -87,7 +92,8 @@ impl IconOperationConfig for BitmaskSlice {
         let assembled = self.generate_icons(&corners, &prefabs, num_frames, possible_states);
 
         // Second phase: map to byond icon states and produce dirs if need
-        // Even though this is the same loop as above, all states need to be generated first for the
+        // Even though this is the same loop as what happens in generate_icons,
+        // all states need to be generated first for the
         // Rotation to work correctly, so it must be done as a second loop.
         let mut icon_states = vec![];
 
@@ -96,10 +102,11 @@ impl IconOperationConfig for BitmaskSlice {
             .clone()
             .map(|x| repeat_for(&x.delays, num_frames as usize));
 
-        for signature in 0..possible_states {
+        let states_to_gen = (0..possible_states)
+            .map(|x| Adjacency::from_bits(x as u8).unwrap())
+            .filter(Adjacency::ref_has_no_orphaned_corner);
+        for adjacency in states_to_gen {
             let mut icon_state_frames = vec![];
-
-            let adjacency = Adjacency::from_bits(signature as u8).unwrap();
 
             for icon_state_dir in &icon_directions {
                 let rotated_sig = adjacency.rotate_to(*icon_state_dir);
@@ -107,6 +114,7 @@ impl IconOperationConfig for BitmaskSlice {
                 icon_state_frames.extend(assembled[&rotated_sig].clone());
             }
 
+            let signature = adjacency.bits();
             let name = if let Some(prefix_name) = &self.output_name {
                 format!("{prefix_name}-{signature}")
             } else {
@@ -120,6 +128,19 @@ impl IconOperationConfig for BitmaskSlice {
                 delay: delay.clone(),
                 ..Default::default()
             }));
+        }
+
+        if let Some(map_icon) = &self.map_icon {
+            let icon =
+                generate_map_icon(self.output_icon_size.x, self.output_icon_size.y, map_icon)
+                    .unwrap();
+            icon_states.push(IconState {
+                name: map_icon.icon_state_name.clone(),
+                dirs: 1,
+                frames: 1,
+                images: vec![icon],
+                ..Default::default()
+            });
         }
 
         let output_icon = Icon {

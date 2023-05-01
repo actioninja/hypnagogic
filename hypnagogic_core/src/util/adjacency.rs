@@ -3,7 +3,6 @@ use bitflags::bitflags;
 use serde::{Deserialize, Serialize};
 
 bitflags! {
-    #[allow(clippy::unsafe_derive_deserialize)]
     #[derive(Serialize, Deserialize)]
     pub struct Adjacency: u8 {
         const N = 0b0000_0001;
@@ -44,6 +43,11 @@ impl Adjacency {
         [Adjacency::S, Adjacency::N, Adjacency::E, Adjacency::W]
     }
 
+    #[must_use]
+    pub const fn diagonals() -> [Adjacency; 4] {
+        [Adjacency::NE, Adjacency::SE, Adjacency::SW, Adjacency::NW]
+    }
+
     /// Gets the sides for a given corner adjacency
     /// Adjacency is always returned in the format of `(Vertical, Horizontal)`
     /// # Panics
@@ -57,6 +61,36 @@ impl Adjacency {
             Adjacency::NW => (Adjacency::N, Adjacency::W),
             _ => panic!("Not a corner!"),
         }
+    }
+
+    #[must_use]
+    pub const fn adjacent_corners_filled(self, corner: Self) -> bool {
+        let (first, second) = corner.corner_sides();
+        self.contains(first) && self.contains(second)
+    }
+
+    #[must_use]
+    pub const fn has_no_orphaned_corner(self) -> bool {
+        // the loop here is manually unrolled because function is const
+        let [first, second, third, fourth] = Self::diagonals();
+        if self.contains(first) && !self.adjacent_corners_filled(first) {
+            return false;
+        }
+        if self.contains(second) && !self.adjacent_corners_filled(second) {
+            return false;
+        }
+        if self.contains(third) && !self.adjacent_corners_filled(third) {
+            return false;
+        }
+        if self.contains(fourth) && !self.adjacent_corners_filled(fourth) {
+            return false;
+        }
+        true
+    }
+
+    #[must_use]
+    pub const fn ref_has_no_orphaned_corner(&self) -> bool {
+        self.has_no_orphaned_corner()
     }
 
     // implemented as const for usage in get corner type
