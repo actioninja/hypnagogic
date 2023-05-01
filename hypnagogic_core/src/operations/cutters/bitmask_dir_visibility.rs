@@ -14,8 +14,8 @@ use crate::operations::error::ProcessorResult;
 use crate::operations::{IconOperationConfig, NamedIcon, OperationMode, ProcessorPayload};
 use crate::util::adjacency::Adjacency;
 use crate::util::corners::{Corner, Side};
-use crate::util::repeat_for;
 use crate::util::icon_ops::dedupe_frames;
+use crate::util::repeat_for;
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct BitmaskDirectionalVis {

@@ -20,8 +20,8 @@ use crate::operations::{
 };
 use crate::util::adjacency::Adjacency;
 use crate::util::corners::{Corner, CornerType, Side};
-use crate::util::repeat_for;
 use crate::util::icon_ops::dedupe_frames;
+use crate::util::repeat_for;
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct SideSpacing {

@@ -1,13 +1,13 @@
-use dmi::icon::{ IconState};
+use dmi::icon::IconState;
 
 // Removes duplicate frames from the icon state's animation, if it has any
-pub fn dedupe_frames(mut icon_state : IconState) -> IconState {
+pub fn dedupe_frames(mut icon_state: IconState) -> IconState {
     if icon_state.frames <= 1 {
         return icon_state;
     }
     let current_delays = match icon_state.delay {
         Some(delay) => delay,
-        None => return icon_state 
+        None => return icon_state,
     };
 
     // As we walk through the frames in this icon state, we're going to keep track of the ones that
@@ -42,5 +42,4 @@ pub fn dedupe_frames(mut icon_state : IconState) -> IconState {
     icon_state.images = new_images;
     icon_state.delay = Some(new_delays);
     return icon_state;
-
 }

@@ -3,8 +3,8 @@ use crate::operations::error::ProcessorResult;
 use crate::operations::{IconOperationConfig, OperationMode, ProcessorPayload};
 use crate::util::adjacency::Adjacency;
 use crate::util::corners::CornerType;
-use crate::util::repeat_for;
 use crate::util::icon_ops::dedupe_frames;
+use crate::util::repeat_for;
 use dmi::icon::{Icon, IconState};
 
 use fixed_map::Map;
