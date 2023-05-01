@@ -42,10 +42,10 @@ pub fn dedupe_frames(icon_state: IconState) -> IconState {
             acc
         });
     
-    return IconState {
+    IconState {
         frames: deduped_anim.working_index + 1,
         images: deduped_anim.frames,
         delay: Some(deduped_anim.delays),
         ..icon_state
-    };
+    }
 }
