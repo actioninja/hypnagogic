@@ -60,6 +60,4 @@ pub fn draw_border(
 }
 
 #[cfg(test)]
-mod test {
-    
-}
+mod test {}
