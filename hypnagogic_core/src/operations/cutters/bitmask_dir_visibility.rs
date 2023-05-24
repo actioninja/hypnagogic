@@ -154,8 +154,7 @@ impl IconOperationConfig for BitmaskDirectionalVis {
                 self.bitmask_slice_config.output_icon_size.x,
                 self.bitmask_slice_config.output_icon_size.y,
                 map_icon,
-            )
-            .unwrap();
+            )?;
             icon_states.push(IconState {
                 name: map_icon.icon_state_name.clone(),
                 dirs: 1,

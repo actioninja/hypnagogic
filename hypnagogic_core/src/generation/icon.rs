@@ -27,7 +27,7 @@ pub fn generate_map_icon(
     if let Some(text) = text {
         let mut text_image = generate_text_block(text, *text_alignment);
         if text_image.width() > (width - 4) {
-            return Err(GenerationError::TextTooLong(text.clone(), (width - 4 / 4)));
+            return Err(GenerationError::TextTooLong(text.clone(), width - 4 / 4));
         }
         if text_image.height() > (height - 4) {
             return Err(GenerationError::TooManyLines(
