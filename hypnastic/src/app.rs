@@ -228,3 +228,4 @@ impl eframe::App for Hypnastic {
         }
     }
 }
+

@@ -2,5 +2,5 @@
 members = [
     "hypnagogic_cli",
     "hypnagogic_core",
-    "hypnastic"
 ]
+
