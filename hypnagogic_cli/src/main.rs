@@ -65,6 +65,8 @@ fn main() -> Result<()> {
 
     println!("Hypnagogic CLI v{VERSION}");
 
+    // subscribers are of different generic types so can't be put into one binding
+    // this is why each branch has its own binding and call to set_global_default
     if debug {
         let subscriber = tracing_subscriber::fmt()
             .pretty()

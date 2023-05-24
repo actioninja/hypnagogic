@@ -111,3 +111,37 @@ y = 16
 # If you do not provide a delay for each frame (ie, two delays for 4 frames,) the delay values
 # will cycle until the list is full. ie, 10,20 for 5 frames becomes 10,20,10,20,10 and so on.
 delays = [10, 20]
+
+# Settings for generating a unique map icon for each icon_state
+# This entire section is optional
+[map_icon]
+# The name of the icon_state the resulting generated icon will use
+icon_state_name = "map_icon"
+# The base color to use for the icon
+# Accepts any hex color
+base_color = "#FFFFFF"
+# Text to generate on the icon. Any spaces will result in a new line of characters.
+# Characters are 3 px wide with 1 px spaces between them. This means around 8 characters can fit
+# on a 32x32 icon.
+# This field is optional, if omitted no text will be on the output icon
+text = "DEF"
+# The color of the text to generate.
+# Accepts any hex color
+# This field will do nothing if `text` is not defined
+text_color = "#000000"
+# What position to place the text on the icon in
+# Valid positions are:
+# "top_left", "top_right", "bottom_left", "bottom_right", "center"
+text_position = "bottom_right"
+# What alignment to use for the text
+# Valid alignments are:
+# "left", "center", "right"
+text_alignment = "right"
+# border settings
+# Borders are always 1 px wide, with the outer border following the edge of the icon, and the inner
+# border being 1 px inside from the edge.
+# style: The style of border to generate, either "solid" or "dotted"
+# color: The color of the border to generate, any hex color
+# These fields are optional, and if omitted no border will be generated for the respective field
+inner_border = { style = "", color = "#000000"}
+outer_border = { style = "", color = "#000000"}
