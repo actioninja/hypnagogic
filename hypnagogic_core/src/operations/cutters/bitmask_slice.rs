@@ -20,6 +20,7 @@ use crate::operations::{
 };
 use crate::util::adjacency::Adjacency;
 use crate::util::corners::{Corner, CornerType, Side};
+use crate::util::icon_ops::dedupe_frames;
 use crate::util::repeat_for;
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -119,14 +120,14 @@ impl IconOperationConfig for BitmaskSlice {
             } else {
                 format!("{signature}")
             };
-            icon_states.push(IconState {
+            icon_states.push(dedupe_frames(IconState {
                 name,
                 dirs: icon_directions.len() as u8,
                 frames: num_frames,
                 images: icon_state_frames,
                 delay: delay.clone(),
                 ..Default::default()
-            });
+            }));
         }
 
         if let Some(map_icon) = &self.map_icon {

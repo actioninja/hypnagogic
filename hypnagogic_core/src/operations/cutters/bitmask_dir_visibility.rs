@@ -14,6 +14,7 @@ use crate::operations::error::ProcessorResult;
 use crate::operations::{IconOperationConfig, NamedIcon, OperationMode, ProcessorPayload};
 use crate::util::adjacency::Adjacency;
 use crate::util::corners::{Corner, Side};
+use crate::util::icon_ops::dedupe_frames;
 use crate::util::repeat_for;
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -94,7 +95,7 @@ impl IconOperationConfig for BitmaskDirectionalVis {
                     imageops::overlay(&mut cut_img, &crop, x as i64, y as i64);
                     icon_state_frames.push(cut_img);
                 }
-                icon_states.push(IconState {
+                icon_states.push(dedupe_frames(IconState {
                     name: format!("{}-{}", adjacency.bits(), side.byond_dir()),
 
                     dirs: 1,
@@ -102,7 +103,7 @@ impl IconOperationConfig for BitmaskDirectionalVis {
                     images: icon_state_frames,
                     delay: delay.clone(),
                     ..Default::default()
-                });
+                }));
             }
         }
 
@@ -137,7 +138,7 @@ impl IconOperationConfig for BitmaskDirectionalVis {
                 icon_state_frames.push(cut_img);
             }
 
-            icon_states.push(IconState {
+            icon_states.push(dedupe_frames(IconState {
                 name: format!("innercorner-{}", corner.byond_dir()),
                 dirs: 1,
                 frames: num_frames,
@@ -145,7 +146,7 @@ impl IconOperationConfig for BitmaskDirectionalVis {
                 delay: delay.clone(),
 
                 ..Default::default()
-            });
+            }));
         }
 
         if let Some(map_icon) = &self.bitmask_slice_config.map_icon {

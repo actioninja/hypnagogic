@@ -3,6 +3,7 @@ use crate::operations::error::ProcessorResult;
 use crate::operations::{IconOperationConfig, OperationMode, ProcessorPayload};
 use crate::util::adjacency::Adjacency;
 use crate::util::corners::CornerType;
+use crate::util::icon_ops::dedupe_frames;
 use crate::util::repeat_for;
 use dmi::icon::{Icon, IconState};
 
@@ -119,22 +120,22 @@ impl IconOperationConfig for BitmaskWindows {
                 }
 
                 let signature = adjacency.bits();
-                states.push(IconState {
+                states.push(dedupe_frames(IconState {
                     name: format!("{prefix}{signature}-upper"),
                     dirs: 1,
                     frames: num_frames,
                     images: upper_frames,
                     delay: delay.clone(),
                     ..Default::default()
-                });
-                states.push(IconState {
+                }));
+                states.push(dedupe_frames(IconState {
                     name: format!("{prefix}{signature}-lower"),
                     dirs: 1,
                     frames: num_frames,
                     images: lower_frames,
                     delay: delay.clone(),
                     ..Default::default()
-                });
+                }));
             };
             states_from_assembled("", &assembled);
             states_from_assembled("alt-", &assembled_alt);
