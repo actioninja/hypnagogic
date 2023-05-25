@@ -1,6 +1,7 @@
 use crate::generation::rect::{Border, BorderStyle};
 use crate::generation::text::Alignment;
 use crate::util::color::Color;
+use crate::util::icon_ops::pick_contrasting_colors;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Default, Serialize, Deserialize)]
@@ -41,6 +42,8 @@ fn default_alignment() -> Alignment {
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct MapIcon {
     pub icon_state_name: String,
+    #[serde(default)]
+    pub automatic: bool,
     #[serde(default = "white")]
     pub base_color: Color,
     #[serde(default)]
@@ -61,6 +64,7 @@ impl Default for MapIcon {
     fn default() -> Self {
         Self {
             icon_state_name: "map_icon".to_string(),
+            automatic: false,
             base_color: Color::new(255, 255, 255, 255),
             text: Some("DEF".to_string()),
             text_color: Color::new(0, 0, 0, 255),
@@ -72,5 +76,20 @@ impl Default for MapIcon {
                 color: Color::new(0, 0, 0, 255),
             }),
         }
+    }
+}
+
+impl MapIcon {
+    pub fn gen_colors(&mut self, colors: &[Color]) {
+        if !self.automatic {
+            return;
+        }
+        let sorted_colors = pick_contrasting_colors(colors);
+        self.base_color = sorted_colors.0;
+        self.text_color = sorted_colors.1;
+        self.outer_border = Some(Border {
+            style: BorderStyle::Solid,
+            color: sorted_colors.1,
+        });
     }
 }

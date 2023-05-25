@@ -117,6 +117,10 @@ delays = [10, 20]
 [map_icon]
 # The name of the icon_state the resulting generated icon will use
 icon_state_name = "map_icon"
+# Attempt to automatically derive colors from the input icon
+# if true, base_color, text_color, and outer_border will be ignored
+# Optional, defaults to false if omitted
+automatic = false
 # The base color to use for the icon
 # Accepts any hex color
 base_color = "#FFFFFF"

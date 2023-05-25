@@ -95,6 +95,11 @@ impl Color {
             self.red, self.green, self.blue, self.alpha
         )
     }
+
+    #[must_use]
+    pub fn luminance(&self) -> f32 {
+        (0.299 * self.red as f32 + 0.587 * self.green as f32 + 0.114 * self.blue as f32) / 255.0
+    }
 }
 
 impl Serialize for Color {
