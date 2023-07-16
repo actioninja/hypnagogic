@@ -1,31 +1,26 @@
-use std::{
-    collections::BTreeMap,
-    io::{BufRead, Seek},
-};
+use std::collections::BTreeMap;
+use std::io::{BufRead, Seek};
 
 use dmi::icon::{Icon, IconState};
 use fixed_map::Map;
 use image::{DynamicImage, GenericImageView, ImageFormat};
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    config::blocks::cutters::{
-        Animation,
-        CutPosition,
-        IconSize,
-        OutputIconPosition,
-        OutputIconSize,
-        Positions,
-    },
-    operations::{
-        cutters::bitmask_slice::{BitmaskSlice, SIZE_OF_DIAGONALS},
-        error::ProcessorResult,
-        IconOperationConfig,
-        OperationMode,
-        ProcessorPayload,
-    },
-    util::{adjacency::Adjacency, corners::CornerType, icon_ops::dedupe_frames, repeat_for},
+use crate::config::blocks::cutters::{
+    Animation,
+    CutPosition,
+    IconSize,
+    OutputIconPosition,
+    OutputIconSize,
+    Positions,
 };
+use crate::operations::cutters::bitmask_slice::{BitmaskSlice, SIZE_OF_DIAGONALS};
+use crate::operations::error::ProcessorResult;
+use crate::operations::{IconOperationConfig, OperationMode, ProcessorPayload};
+use crate::util::adjacency::Adjacency;
+use crate::util::corners::CornerType;
+use crate::util::icon_ops::dedupe_frames;
+use crate::util::repeat_for;
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct BitmaskWindows {

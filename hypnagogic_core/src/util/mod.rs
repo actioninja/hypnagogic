@@ -1,4 +1,5 @@
-use toml::{map::Map, Value};
+use toml::map::Map;
+use toml::Value;
 
 pub mod adjacency;
 pub mod color;

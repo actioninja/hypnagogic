@@ -1,4 +1,10 @@
-# Gimme them unstables
+# A set of sane, extremely close to "standard rust" style options
+# Mostly just utilizes some common convention that is not currently
+# agressively formatted by rustfmt, because I agree with said
+# convention.
+# Each option is commented with what effect it actually has.
+
+# Enable unstable features
 unstable_features = true
 
 # Max blank lines between any statement
@@ -9,9 +15,6 @@ combine_control_expr = false
 
 # turns chains of _ wildcards into a single .. wildcard in tuples
 condense_wildcard_suffixes = true
-
-# put single expression functions on one line
-fn_single_line = true
 
 # Force multiline closure and match arm bodies to be wrapped in a block
 force_multiline_blocks = true
@@ -31,8 +34,8 @@ hex_literal_case = "Upper"
 # horizontal imports when the line is shorter than 80, vertical otherwise
 imports_layout = "HorizontalVertical"
 
-# merge imports into a single import statement per crate
-imports_granularity = "Crate"
+# Enforces single import per module, with merged imports for the same module
+imports_granularity = "Module"
 
 # Enforce unix style line endings
 newline_style = "Unix"
@@ -51,4 +54,3 @@ use_field_init_shorthand = true
 
 # wrap comments if they're longer than 80 characters
 wrap_comments = true
-

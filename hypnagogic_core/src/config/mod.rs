@@ -2,14 +2,14 @@ use std::io::{read_to_string, Read, Seek};
 
 use serde::Deserialize;
 use template_resolver::TemplateResolver;
-use toml::{map::Map, Value};
+use toml::map::Map;
+use toml::Value;
 use tracing::{debug, trace};
 
-use crate::{
-    config::{error::ConfigResult, template_resolver::error::TemplateResult},
-    operations::IconOperation,
-    util::deep_merge_toml,
-};
+use crate::config::error::ConfigResult;
+use crate::config::template_resolver::error::TemplateResult;
+use crate::operations::IconOperation;
+use crate::util::deep_merge_toml;
 
 pub mod blocks;
 pub mod error;

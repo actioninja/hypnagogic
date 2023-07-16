@@ -55,7 +55,9 @@ impl Side {
     /// Returns an array of directions in the order that byond specifies
     /// directions. Yes, it is correct that "South" is done before North
     #[must_use]
-    pub const fn dmi_cardinals() -> [Self; 4] { [Self::South, Self::North, Self::East, Self::West] }
+    pub const fn dmi_cardinals() -> [Self; 4] {
+        [Self::South, Self::North, Self::East, Self::West]
+    }
 
     /// Returns a boolean determining whether a Side is a "vertical" side.
     /// "North" and "South" return true and vice versa. Maybe this is

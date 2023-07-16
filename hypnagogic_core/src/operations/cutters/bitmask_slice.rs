@@ -1,7 +1,5 @@
-use std::{
-    collections::{BTreeMap, HashMap},
-    io::{BufRead, Seek},
-};
+use std::collections::{BTreeMap, HashMap};
+use std::io::{BufRead, Seek};
 
 use dmi::icon::{Icon, IconState};
 use enum_iterator::all;
@@ -10,36 +8,30 @@ use image::{imageops, DynamicImage, GenericImageView, ImageFormat};
 use serde::{Deserialize, Serialize};
 use tracing::{debug, trace};
 
-use crate::{
-    config::blocks::{
-        cutters::{
-            Animation,
-            CutPosition,
-            IconSize,
-            OutputIconPosition,
-            OutputIconSize,
-            Positions,
-            PrefabOverlays,
-            Prefabs,
-        },
-        generators::MapIcon,
-    },
-    generation::icon::generate_map_icon,
-    operations::{
-        error::ProcessorResult,
-        IconOperationConfig,
-        NamedIcon,
-        OperationMode,
-        OutputImage,
-        ProcessorPayload,
-    },
-    util::{
-        adjacency::Adjacency,
-        corners::{Corner, CornerType, Side},
-        icon_ops::dedupe_frames,
-        repeat_for,
-    },
+use crate::config::blocks::cutters::{
+    Animation,
+    CutPosition,
+    IconSize,
+    OutputIconPosition,
+    OutputIconSize,
+    Positions,
+    PrefabOverlays,
+    Prefabs,
 };
+use crate::config::blocks::generators::MapIcon;
+use crate::generation::icon::generate_map_icon;
+use crate::operations::error::ProcessorResult;
+use crate::operations::{
+    IconOperationConfig,
+    NamedIcon,
+    OperationMode,
+    OutputImage,
+    ProcessorPayload,
+};
+use crate::util::adjacency::Adjacency;
+use crate::util::corners::{Corner, CornerType, Side};
+use crate::util::icon_ops::dedupe_frames;
+use crate::util::repeat_for;
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct SideSpacing {
@@ -49,7 +41,9 @@ pub struct SideSpacing {
 
 impl SideSpacing {
     #[must_use]
-    pub fn step(self) -> u32 { self.end - self.start }
+    pub fn step(self) -> u32 {
+        self.end - self.start
+    }
 }
 
 #[derive(Clone, PartialEq, Debug, Default, Serialize, Deserialize)]

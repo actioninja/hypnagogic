@@ -21,7 +21,9 @@ bitflags! {
 }
 
 impl From<Corner> for Adjacency {
-    fn from(corner: Corner) -> Self { Adjacency::from_corner(corner) }
+    fn from(corner: Corner) -> Self {
+        Adjacency::from_corner(corner)
+    }
 }
 
 impl From<Side> for Adjacency {
@@ -88,7 +90,9 @@ impl Adjacency {
     }
 
     #[must_use]
-    pub const fn ref_has_no_orphaned_corner(&self) -> bool { self.has_no_orphaned_corner() }
+    pub const fn ref_has_no_orphaned_corner(&self) -> bool {
+        self.has_no_orphaned_corner()
+    }
 
     // implemented as const for usage in get corner type
     const fn from_corner(corner: Corner) -> Self {

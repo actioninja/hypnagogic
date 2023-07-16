@@ -1,4 +1,5 @@
-use toml::{map::Map, Value};
+use toml::map::Map;
+use toml::Value;
 
 use crate::config::template_resolver::error::TemplateResult;
 
@@ -20,5 +21,7 @@ pub trait TemplateResolver {
 pub struct NullResolver;
 
 impl TemplateResolver for NullResolver {
-    fn resolve(&self, _: &str) -> TemplateResult { Ok(Value::Table(Map::new())) }
+    fn resolve(&self, _: &str) -> TemplateResult {
+        Ok(Value::Table(Map::new()))
+    }
 }

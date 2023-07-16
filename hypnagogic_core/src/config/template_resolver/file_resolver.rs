@@ -1,20 +1,14 @@
-use core::{
-    default::Default,
-    result::Result::{Err, Ok},
-};
-use std::{
-    fmt::Formatter,
-    fs,
-    path::{Path, PathBuf},
-};
+use core::default::Default;
+use core::result::Result::{Err, Ok};
+use std::fmt::Formatter;
+use std::fs;
+use std::path::{Path, PathBuf};
 
 use toml::Value;
 use tracing::{debug, trace};
 
-use crate::config::template_resolver::{
-    error::{TemplateError, TemplateResult},
-    TemplateResolver,
-};
+use crate::config::template_resolver::error::{TemplateError, TemplateResult};
+use crate::config::template_resolver::TemplateResolver;
 
 /// Loads templates from a folder on the filesystem.
 #[derive(Clone, PartialEq, Eq, Debug)]

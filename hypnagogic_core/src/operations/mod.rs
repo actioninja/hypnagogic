@@ -1,14 +1,10 @@
-use std::{
-    fmt::Debug,
-    io::{BufRead, Seek},
-    path::{Path, PathBuf},
-};
+use std::fmt::Debug;
+use std::io::{BufRead, Seek};
+use std::path::{Path, PathBuf};
 
-use cutters::{
-    bitmask_dir_visibility::BitmaskDirectionalVis,
-    bitmask_slice::BitmaskSlice,
-    bitmask_windows::BitmaskWindows,
-};
+use cutters::bitmask_dir_visibility::BitmaskDirectionalVis;
+use cutters::bitmask_slice::BitmaskSlice;
+use cutters::bitmask_windows::BitmaskWindows;
 use dmi::icon::Icon;
 use enum_dispatch::enum_dispatch;
 use image::DynamicImage;
@@ -113,7 +109,9 @@ pub enum ProcessorPayload {
 
 impl ProcessorPayload {
     #[must_use]
-    pub fn from_icon(icon: Icon) -> Self { Self::Single(Box::new(OutputImage::Dmi(icon))) }
+    pub fn from_icon(icon: Icon) -> Self {
+        Self::Single(Box::new(OutputImage::Dmi(icon)))
+    }
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Debug)]

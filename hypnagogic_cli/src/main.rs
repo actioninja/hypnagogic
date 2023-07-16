@@ -1,23 +1,24 @@
 mod error;
 
-use std::{
-    fs,
-    fs::{metadata, File},
-    io::BufReader,
-    path::{Path, PathBuf},
-    process::exit,
-    time::Instant,
-};
+use std::fs;
+use std::fs::{metadata, File};
+use std::io::BufReader;
+use std::path::{Path, PathBuf};
+use std::process::exit;
+use std::time::Instant;
 
 use anyhow::{anyhow, Result};
 use clap::Parser;
-use hypnagogic_core::{
-    config::{
-        error::ConfigError,
-        read_config,
-        template_resolver::{error::TemplateError, file_resolver::FileResolver},
-    },
-    operations::{IconOperationConfig, NamedIcon, OperationMode, OutputImage, ProcessorPayload},
+use hypnagogic_core::config::error::ConfigError;
+use hypnagogic_core::config::read_config;
+use hypnagogic_core::config::template_resolver::error::TemplateError;
+use hypnagogic_core::config::template_resolver::file_resolver::FileResolver;
+use hypnagogic_core::operations::{
+    IconOperationConfig,
+    NamedIcon,
+    OperationMode,
+    OutputImage,
+    ProcessorPayload,
 };
 use rayon::prelude::*;
 use tracing::{debug, info, Level};

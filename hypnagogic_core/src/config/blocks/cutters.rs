@@ -12,7 +12,9 @@ pub struct IconSize {
 }
 
 impl Default for IconSize {
-    fn default() -> Self { Self { x: 32, y: 32 } }
+    fn default() -> Self {
+        Self { x: 32, y: 32 }
+    }
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize, Default)]
@@ -28,7 +30,9 @@ pub struct OutputIconSize {
 }
 
 impl Default for OutputIconSize {
-    fn default() -> Self { Self { x: 32, y: 32 } }
+    fn default() -> Self {
+        Self { x: 32, y: 32 }
+    }
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
@@ -38,7 +42,9 @@ pub struct CutPosition {
 }
 
 impl Default for CutPosition {
-    fn default() -> Self { Self { x: 16, y: 16 } }
+    fn default() -> Self {
+        Self { x: 16, y: 16 }
+    }
 }
 
 #[derive(Clone, Eq, PartialEq, Debug)]
@@ -46,7 +52,9 @@ pub struct Positions(pub Map<CornerType, u32>);
 
 impl Positions {
     #[must_use]
-    pub fn get(&self, key: CornerType) -> Option<u32> { self.0.get(key).copied() }
+    pub fn get(&self, key: CornerType) -> Option<u32> {
+        self.0.get(key).copied()
+    }
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -184,7 +192,9 @@ pub struct SlicePoint(pub Map<Side, u32>);
 
 impl SlicePoint {
     #[must_use]
-    pub fn get(&self, key: Side) -> Option<u32> { self.0.get(key).copied() }
+    pub fn get(&self, key: Side) -> Option<u32> {
+        self.0.get(key).copied()
+    }
 }
 
 #[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]

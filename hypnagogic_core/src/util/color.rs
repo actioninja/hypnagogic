@@ -118,7 +118,9 @@ impl<'de> Deserialize<'de> for Color {
 }
 
 impl From<Color> for [u8; 4] {
-    fn from(color: Color) -> Self { [color.red, color.green, color.blue, color.alpha] }
+    fn from(color: Color) -> Self {
+        [color.red, color.green, color.blue, color.alpha]
+    }
 }
 
 impl From<[u8; 4]> for Color {
@@ -155,7 +157,9 @@ impl From<[u8; 3]> for Color {
 }
 
 impl From<Color> for (u8, u8, u8, u8) {
-    fn from(color: Color) -> Self { (color.red, color.green, color.blue, color.alpha) }
+    fn from(color: Color) -> Self {
+        (color.red, color.green, color.blue, color.alpha)
+    }
 }
 
 impl From<(u8, u8, u8, u8)> for Color {

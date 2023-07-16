@@ -1,4 +1,5 @@
-use std::{io, path::PathBuf};
+use std::io;
+use std::path::PathBuf;
 
 use hypnagogic_core::config::error::ConfigError;
 use thiserror::Error;
@@ -30,7 +31,9 @@ pub enum Error {
 }
 
 impl UFE for Error {
-    fn summary(&self) -> String { format!("{}", self) }
+    fn summary(&self) -> String {
+        format!("{}", self)
+    }
 
     fn reasons(&self) -> Option<Vec<String>> {
         match self {

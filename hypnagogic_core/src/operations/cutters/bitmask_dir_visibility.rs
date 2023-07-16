@@ -5,24 +5,20 @@ use enum_iterator::all;
 use image::{imageops, DynamicImage, GenericImageView, ImageFormat};
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    config::blocks::cutters::SlicePoint,
-    generation::icon::generate_map_icon,
-    operations::{
-        cutters::bitmask_slice::{BitmaskSlice, SideSpacing, SIZE_OF_CARDINALS, SIZE_OF_DIAGONALS},
-        error::ProcessorResult,
-        IconOperationConfig,
-        NamedIcon,
-        OperationMode,
-        ProcessorPayload,
-    },
-    util::{
-        adjacency::Adjacency,
-        corners::{Corner, Side},
-        icon_ops::dedupe_frames,
-        repeat_for,
-    },
+use crate::config::blocks::cutters::SlicePoint;
+use crate::generation::icon::generate_map_icon;
+use crate::operations::cutters::bitmask_slice::{
+    BitmaskSlice,
+    SideSpacing,
+    SIZE_OF_CARDINALS,
+    SIZE_OF_DIAGONALS,
 };
+use crate::operations::error::ProcessorResult;
+use crate::operations::{IconOperationConfig, NamedIcon, OperationMode, ProcessorPayload};
+use crate::util::adjacency::Adjacency;
+use crate::util::corners::{Corner, Side};
+use crate::util::icon_ops::dedupe_frames;
+use crate::util::repeat_for;
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct BitmaskDirectionalVis {
