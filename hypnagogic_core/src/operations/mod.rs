@@ -1,11 +1,13 @@
+use dmi::error::DmiError;
 use std::fmt::Debug;
-use std::io::{BufRead, Seek};
+use std::io::{BufRead, Read, Seek};
 use std::path::{Path, PathBuf};
 
 use dmi::icon::Icon;
 use enum_dispatch::enum_dispatch;
-use image::DynamicImage;
+use image::{DynamicImage, ImageError, ImageFormat};
 use serde::{Deserialize, Serialize};
+use thiserror::Error;
 use tracing::debug;
 
 use cutters::bitmask_dir_visibility::BitmaskDirectionalVis;
@@ -17,6 +19,35 @@ use crate::operations::error::ProcessorResult;
 pub mod cutters;
 pub mod error;
 pub mod format_converter;
+
+#[derive(Debug, Error)]
+pub enum InputError {
+    #[error("This image format is unsupported:\n{0}")]
+    UnsupportedFormat(String),
+    #[error("Error reading the input as a dynamic image:\n{0}")]
+    DynamicRead(#[from] ImageError),
+    #[error("Error reading the input stream as a dmi image:\n{0}")]
+    DmiRead(#[from] DmiError),
+}
+
+#[derive(Clone)]
+pub enum InputIcon {
+    DynamicImage(DynamicImage),
+    Dmi(Icon),
+}
+
+impl InputIcon {
+    pub fn from_reader<R: BufRead + Seek>(
+        reader: &mut R,
+        extension: &str,
+    ) -> Result<Self, InputError> {
+        match extension {
+            "png" => Ok(Self::DynamicImage(image::load(reader, ImageFormat::Png)?)),
+            "dmi" => Ok(Self::Dmi(Icon::load(reader)?)),
+            _ => Err(InputError::UnsupportedFormat(extension.to_string())),
+        }
+    }
+}
 
 #[derive(Clone)]
 pub struct NamedIcon {
@@ -128,9 +159,9 @@ pub trait IconOperationConfig {
     /// Should generally not be called directly, preferring to call via `do_operation`
     /// # Errors
     /// Possible errors vary based on implementor; should be some kind of `ProcessorError::ImageError`
-    fn perform_operation<R: BufRead + Seek>(
+    fn perform_operation(
         &self,
-        input: &mut R,
+        input: &InputIcon,
         mode: OperationMode,
     ) -> ProcessorResult<ProcessorPayload>;
 
@@ -147,9 +178,9 @@ pub trait IconOperationConfig {
     /// Possible errors vary based on implementor
     /// Error type is potentially a `ProcessorError::InvalidConfig` from a call to `verify_config`,
     /// or a processor error from a call to `perform_operation`
-    fn do_operation<R: BufRead + Seek>(
+    fn do_operation(
         &self,
-        input: &mut R,
+        input: &InputIcon,
         mode: OperationMode,
     ) -> ProcessorResult<ProcessorPayload> {
         self.verify_config()?;

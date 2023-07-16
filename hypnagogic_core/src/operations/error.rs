@@ -2,6 +2,8 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum ProcessorError {
+    #[error("Error receiving image, wrong format received:\n{0}")]
+    FormatError(String),
     #[error("Error processing image:\n{0}")]
     ImageError(#[from] image::error::ImageError),
     #[error("Error generating icon for processor:\n{0}")]

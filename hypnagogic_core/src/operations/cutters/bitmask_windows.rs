@@ -1,6 +1,6 @@
 use crate::operations::cutters::bitmask_slice::{BitmaskSlice, SIZE_OF_DIAGONALS};
-use crate::operations::error::ProcessorResult;
-use crate::operations::{IconOperationConfig, OperationMode, ProcessorPayload};
+use crate::operations::error::{ProcessorError, ProcessorResult};
+use crate::operations::{IconOperationConfig, InputIcon, OperationMode, ProcessorPayload};
 use crate::util::adjacency::Adjacency;
 use crate::util::corners::CornerType;
 use crate::util::icon_ops::dedupe_frames;
@@ -29,12 +29,14 @@ pub struct BitmaskWindows {
 
 impl IconOperationConfig for BitmaskWindows {
     #[tracing::instrument(skip(input))]
-    fn perform_operation<R: BufRead + Seek>(
+    fn perform_operation(
         &self,
-        input: &mut R,
+        input: &InputIcon,
         mode: OperationMode,
     ) -> ProcessorResult<ProcessorPayload> {
-        let mut img = image::load(input, ImageFormat::Png)?;
+        let InputIcon::DynamicImage(img) = input else {
+            return Err(ProcessorError::FormatError("This operation only accepts raw images".to_string()));
+        };
 
         let (_in_x, in_y) = img.dimensions();
         let num_frames = in_y / self.icon_size.y;
@@ -63,7 +65,7 @@ impl IconOperationConfig for BitmaskWindows {
             map_icon: None,
         };
 
-        let (corners, prefabs) = bitmask_config.generate_corners(&mut img)?;
+        let (corners, prefabs) = bitmask_config.generate_corners(&img)?;
         let assembled =
             bitmask_config.generate_icons(&corners, &prefabs, num_frames, SIZE_OF_DIAGONALS);
 
@@ -78,7 +80,7 @@ impl IconOperationConfig for BitmaskWindows {
 
         alt_config.positions = Positions(positions);
 
-        let (corners_alt, prefabs_alt) = alt_config.generate_corners(&mut img)?;
+        let (corners_alt, prefabs_alt) = alt_config.generate_corners(&img)?;
         let assembled_alt =
             alt_config.generate_icons(&corners_alt, &prefabs_alt, num_frames, SIZE_OF_DIAGONALS);
 
