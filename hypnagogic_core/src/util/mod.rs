@@ -1,5 +1,4 @@
-use toml::map::Map;
-use toml::Value;
+use toml::{map::Map, Value};
 
 pub mod adjacency;
 pub mod color;
@@ -27,8 +26,9 @@ pub fn repeat_for<T: Clone>(to_repeat: &[T], amount: usize) -> Vec<T> {
 #[cfg(test)]
 mod test {
 
-    use crate::util::deep_merge_toml;
     use toml::Value;
+
+    use crate::util::deep_merge_toml;
 
     #[test]
     fn deep_merge_simple() {

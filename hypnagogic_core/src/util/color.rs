@@ -1,6 +1,7 @@
+use std::num::ParseIntError;
+
 use image::DynamicImage;
 use serde::{Deserialize, Serialize};
-use std::num::ParseIntError;
 use thiserror::Error;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Default)]
@@ -36,10 +37,11 @@ impl Color {
     /// Accepts 3, 4, 6, and 8 digit hex strings.
     /// If the string is 3 or 4 digits, each digit is duplicated.
     /// # Errors
-    /// Returns an `HexConversionError::MissingHash` if the string does not start with #
-    /// Returns an `HexConversionError::InvalidLength` if the string is not 3, 4, 6, or 8 digits long
-    /// Returns an `HexConversionError::BadHex` if the string contains invalid characters and
-    /// /or fails to parse
+    /// Returns an `HexConversionError::MissingHash` if the string does not
+    /// start with # Returns an `HexConversionError::InvalidLength` if the
+    /// string is not 3, 4, 6, or 8 digits long Returns an
+    /// `HexConversionError::BadHex` if the string contains invalid characters
+    /// and /or fails to parse
     #[allow(clippy::missing_panics_doc)] // shouldn't be able to panic
     pub fn from_hex_str(hex_str: &str) -> Result<Self, HexConversionError> {
         let Some(hex_str) = hex_str.strip_prefix('#') else { return Err(HexConversionError::MissingHash(hex_str.to_string())) };
@@ -116,9 +118,7 @@ impl<'de> Deserialize<'de> for Color {
 }
 
 impl From<Color> for [u8; 4] {
-    fn from(color: Color) -> Self {
-        [color.red, color.green, color.blue, color.alpha]
-    }
+    fn from(color: Color) -> Self { [color.red, color.green, color.blue, color.alpha] }
 }
 
 impl From<[u8; 4]> for Color {
@@ -155,9 +155,7 @@ impl From<[u8; 3]> for Color {
 }
 
 impl From<Color> for (u8, u8, u8, u8) {
-    fn from(color: Color) -> Self {
-        (color.red, color.green, color.blue, color.alpha)
-    }
+    fn from(color: Color) -> Self { (color.red, color.green, color.blue, color.alpha) }
 }
 
 impl From<(u8, u8, u8, u8)> for Color {

@@ -1,8 +1,12 @@
-use crate::generation::rect::{Border, BorderStyle};
-use crate::generation::text::Alignment;
-use crate::util::color::Color;
-use crate::util::icon_ops::pick_contrasting_colors;
 use serde::{Deserialize, Serialize};
+
+use crate::{
+    generation::{
+        rect::{Border, BorderStyle},
+        text::Alignment,
+    },
+    util::{color::Color, icon_ops::pick_contrasting_colors},
+};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -15,17 +19,11 @@ pub enum Position {
     Center,
 }
 
-fn white() -> Color {
-    Color::new(255, 255, 255, 255)
-}
+fn white() -> Color { Color::new(255, 255, 255, 255) }
 
-fn black() -> Color {
-    Color::new(0, 0, 0, 255)
-}
+fn black() -> Color { Color::new(0, 0, 0, 255) }
 
-fn bottom_right() -> Position {
-    Position::BottomRight
-}
+fn bottom_right() -> Position { Position::BottomRight }
 
 #[allow(clippy::unnecessary_wraps)] // wrap is needed for serde default
 fn default_outer_border() -> Option<Border> {
@@ -35,9 +33,7 @@ fn default_outer_border() -> Option<Border> {
     })
 }
 
-fn default_alignment() -> Alignment {
-    Alignment::Right
-}
+fn default_alignment() -> Alignment { Alignment::Right }
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct MapIcon {

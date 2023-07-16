@@ -1,7 +1,10 @@
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
+
 use dmi::icon::Icon;
 use image::DynamicImage;
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
 use thiserror::Error;
 use tracing::error;
 use walkdir::WalkDir;

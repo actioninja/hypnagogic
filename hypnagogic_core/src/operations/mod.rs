@@ -1,16 +1,19 @@
-use std::fmt::Debug;
-use std::io::{BufRead, Seek};
-use std::path::{Path, PathBuf};
+use std::{
+    fmt::Debug,
+    io::{BufRead, Seek},
+    path::{Path, PathBuf},
+};
 
+use cutters::{
+    bitmask_dir_visibility::BitmaskDirectionalVis,
+    bitmask_slice::BitmaskSlice,
+    bitmask_windows::BitmaskWindows,
+};
 use dmi::icon::Icon;
 use enum_dispatch::enum_dispatch;
 use image::DynamicImage;
 use serde::{Deserialize, Serialize};
 use tracing::debug;
-
-use cutters::bitmask_dir_visibility::BitmaskDirectionalVis;
-use cutters::bitmask_slice::BitmaskSlice;
-use cutters::bitmask_windows::BitmaskWindows;
 
 use crate::operations::error::ProcessorResult;
 
@@ -110,9 +113,7 @@ pub enum ProcessorPayload {
 
 impl ProcessorPayload {
     #[must_use]
-    pub fn from_icon(icon: Icon) -> Self {
-        Self::Single(Box::new(OutputImage::Dmi(icon)))
-    }
+    pub fn from_icon(icon: Icon) -> Self { Self::Single(Box::new(OutputImage::Dmi(icon))) }
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Debug)]
@@ -125,28 +126,32 @@ pub enum OperationMode {
 #[enum_dispatch]
 pub trait IconOperationConfig {
     /// Represents performing an icon operation as defined by the implementor
-    /// Should generally not be called directly, preferring to call via `do_operation`
-    /// # Errors
-    /// Possible errors vary based on implementor; should be some kind of `ProcessorError::ImageError`
+    /// Should generally not be called directly, preferring to call via
+    /// `do_operation` # Errors
+    /// Possible errors vary based on implementor; should be some kind of
+    /// `ProcessorError::ImageError`
     fn perform_operation<R: BufRead + Seek>(
         &self,
         input: &mut R,
         mode: OperationMode,
     ) -> ProcessorResult<ProcessorPayload>;
 
-    /// Verifies that current config values are valid within the context of the operation to be performed
-    /// # Errors
-    /// Possible errors vary based on implementor; should be some kind of `ProcessorError::InvalidConfig`
+    /// Verifies that current config values are valid within the context of the
+    /// operation to be performed # Errors
+    /// Possible errors vary based on implementor; should be some kind of
+    /// `ProcessorError::InvalidConfig`
     fn verify_config(&self) -> ProcessorResult<()>;
 
-    /// Helper function to call `verify_config` and `perform_operation` in sequence.
+    /// Helper function to call `verify_config` and `perform_operation` in
+    /// sequence.
     ///
-    /// This is what should be used in most cases, with trait implementations not needing to
-    /// override this.
+    /// This is what should be used in most cases, with trait implementations
+    /// not needing to override this.
     /// # Errors
     /// Possible errors vary based on implementor
-    /// Error type is potentially a `ProcessorError::InvalidConfig` from a call to `verify_config`,
-    /// or a processor error from a call to `perform_operation`
+    /// Error type is potentially a `ProcessorError::InvalidConfig` from a call
+    /// to `verify_config`, or a processor error from a call to
+    /// `perform_operation`
     fn do_operation<R: BufRead + Seek>(
         &self,
         input: &mut R,

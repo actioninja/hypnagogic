@@ -1,5 +1,6 @@
-use crate::generation::text;
 use thiserror::Error;
+
+use crate::generation::text;
 
 #[derive(Debug, Error)]
 pub enum GenerationError {

@@ -1,6 +1,6 @@
+use std::{path::PathBuf, process::Command};
+
 use assert_cmd::prelude::*;
-use std::path::PathBuf;
-use std::process::Command;
 
 pub fn run_with_args(end_args: Vec<String>) -> Result<Command, Box<dyn std::error::Error>> {
     let mut command = Command::cargo_bin("hypnagogic-cli")?;

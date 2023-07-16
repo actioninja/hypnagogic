@@ -1,6 +1,7 @@
-use crate::util::corners::{Corner, CornerType, Side};
 use bitflags::bitflags;
 use serde::{Deserialize, Serialize};
+
+use crate::util::corners::{Corner, CornerType, Side};
 
 bitflags! {
     #[derive(Serialize, Deserialize)]
@@ -20,9 +21,7 @@ bitflags! {
 }
 
 impl From<Corner> for Adjacency {
-    fn from(corner: Corner) -> Self {
-        Adjacency::from_corner(corner)
-    }
+    fn from(corner: Corner) -> Self { Adjacency::from_corner(corner) }
 }
 
 impl From<Side> for Adjacency {
@@ -89,9 +88,7 @@ impl Adjacency {
     }
 
     #[must_use]
-    pub const fn ref_has_no_orphaned_corner(&self) -> bool {
-        self.has_no_orphaned_corner()
-    }
+    pub const fn ref_has_no_orphaned_corner(&self) -> bool { self.has_no_orphaned_corner() }
 
     // implemented as const for usage in get corner type
     const fn from_corner(corner: Corner) -> Self {
@@ -130,7 +127,8 @@ impl Adjacency {
                 CornerType::Concave
             }
         } else if self.contains(vertical) {
-            // Since we don't have both, it must be exclusive meaning horizontal doesn't need to be checked
+            // Since we don't have both, it must be exclusive meaning horizontal doesn't
+            // need to be checked
             CornerType::Vertical
         } else if self.contains(horizontal) {
             // Ditto as above, but now for horizontal
@@ -144,46 +142,54 @@ impl Adjacency {
     pub fn rotate_dir(self, direction: Self) -> Self {
         match direction {
             // 180 degree rotation
-            Adjacency::N => match self {
-                Adjacency::N => Adjacency::S,
-                Adjacency::S => Adjacency::N,
-                Adjacency::E => Adjacency::W,
-                Adjacency::W => Adjacency::E,
-                Adjacency::NE => Adjacency::SW,
-                Adjacency::SE => Adjacency::NW,
-                Adjacency::SW => Adjacency::NE,
-                Adjacency::NW => Adjacency::SE,
-                _ => unimplemented!("Only single allowed"),
-            },
+            Adjacency::N => {
+                match self {
+                    Adjacency::N => Adjacency::S,
+                    Adjacency::S => Adjacency::N,
+                    Adjacency::E => Adjacency::W,
+                    Adjacency::W => Adjacency::E,
+                    Adjacency::NE => Adjacency::SW,
+                    Adjacency::SE => Adjacency::NW,
+                    Adjacency::SW => Adjacency::NE,
+                    Adjacency::NW => Adjacency::SE,
+                    _ => unimplemented!("Only single allowed"),
+                }
+            }
             // No rotation needed!
             Adjacency::S => self,
             // Counter-clockwise 90 degrees
-            Adjacency::E => match self {
-                Adjacency::N => Adjacency::W,
-                Adjacency::S => Adjacency::E,
-                Adjacency::E => Adjacency::N,
-                Adjacency::W => Adjacency::S,
-                Adjacency::NE => Adjacency::NW,
-                Adjacency::SE => Adjacency::NE,
-                Adjacency::SW => Adjacency::SE,
-                Adjacency::NW => Adjacency::SW,
-                _ => unimplemented!("Only single allowed"),
-            },
+            Adjacency::E => {
+                match self {
+                    Adjacency::N => Adjacency::W,
+                    Adjacency::S => Adjacency::E,
+                    Adjacency::E => Adjacency::N,
+                    Adjacency::W => Adjacency::S,
+                    Adjacency::NE => Adjacency::NW,
+                    Adjacency::SE => Adjacency::NE,
+                    Adjacency::SW => Adjacency::SE,
+                    Adjacency::NW => Adjacency::SW,
+                    _ => unimplemented!("Only single allowed"),
+                }
+            }
             // Clockwise 90 degrees
-            Adjacency::W => match self {
-                Adjacency::N => Adjacency::E,
-                Adjacency::S => Adjacency::W,
-                Adjacency::E => Adjacency::S,
-                Adjacency::W => Adjacency::N,
-                Adjacency::NE => Adjacency::SE,
-                Adjacency::SE => Adjacency::SW,
-                Adjacency::SW => Adjacency::NW,
-                Adjacency::NW => Adjacency::NE,
-                _ => unimplemented!("Only single allowed"),
-            },
-            _ => unimplemented!(
-                "Rotating to diagonals doesn't make sense. This is a programming error."
-            ),
+            Adjacency::W => {
+                match self {
+                    Adjacency::N => Adjacency::E,
+                    Adjacency::S => Adjacency::W,
+                    Adjacency::E => Adjacency::S,
+                    Adjacency::W => Adjacency::N,
+                    Adjacency::NE => Adjacency::SE,
+                    Adjacency::SE => Adjacency::SW,
+                    Adjacency::SW => Adjacency::NW,
+                    Adjacency::NW => Adjacency::NE,
+                    _ => unimplemented!("Only single allowed"),
+                }
+            }
+            _ => {
+                unimplemented!(
+                    "Rotating to diagonals doesn't make sense. This is a programming error."
+                )
+            }
         }
     }
 

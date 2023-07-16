@@ -1,27 +1,30 @@
 mod error;
 
-use std::fs;
-use std::fs::{metadata, File};
-use std::io::BufReader;
-use std::path::{Path, PathBuf};
-use std::process::exit;
-use std::time::Instant;
+use std::{
+    fs,
+    fs::{metadata, File},
+    io::BufReader,
+    path::{Path, PathBuf},
+    process::exit,
+    time::Instant,
+};
 
 use anyhow::{anyhow, Result};
 use clap::Parser;
+use hypnagogic_core::{
+    config::{
+        error::ConfigError,
+        read_config,
+        template_resolver::{error::TemplateError, file_resolver::FileResolver},
+    },
+    operations::{IconOperationConfig, NamedIcon, OperationMode, OutputImage, ProcessorPayload},
+};
 use rayon::prelude::*;
 use tracing::{debug, info, Level};
 use user_error::UFE;
 use walkdir::WalkDir;
 
 use crate::error::Error;
-use hypnagogic_core::config::error::ConfigError;
-use hypnagogic_core::config::read_config;
-use hypnagogic_core::config::template_resolver::error::TemplateError;
-use hypnagogic_core::config::template_resolver::file_resolver::FileResolver;
-use hypnagogic_core::operations::{
-    IconOperationConfig, NamedIcon, OperationMode, OutputImage, ProcessorPayload,
-};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -38,7 +41,8 @@ struct Args {
     /// Doesn't wait for a keypress after running. For CI or toolchain usage.
     #[arg(short = 'w', long)]
     dont_wait: bool,
-    /// Output directory of folders. If not set, output will match the file tree and output adjacent to input
+    /// Output directory of folders. If not set, output will match the file tree
+    /// and output adjacent to input
     #[arg(short, long)]
     output: Option<String>,
     /// Location of the templates folder
@@ -138,7 +142,8 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-/// Gnarly, effectful function hoisted out here so that I can still use ? but parallelize with rayon
+/// Gnarly, effectful function hoisted out here so that I can still use ? but
+/// parallelize with rayon
 #[allow(clippy::result_large_err)]
 fn process_icon(
     flatten: bool,
@@ -164,28 +169,36 @@ fn process_icon(
             .unwrap()
             .to_string();
         match err {
-            ConfigError::Template(template_err) => match template_err {
-                TemplateError::FailedToFindTemplate(template_string, expected_path) => {
-                    Error::TemplateNotFound {
-                        source_config,
-                        template_string,
-                        expected_path,
+            ConfigError::Template(template_err) => {
+                match template_err {
+                    TemplateError::FailedToFindTemplate(template_string, expected_path) => {
+                        Error::TemplateNotFound {
+                            source_config,
+                            template_string,
+                            expected_path,
+                        }
                     }
+                    TemplateError::TOMLError(err) => {
+                        Error::InvalidConfig {
+                            source_config,
+                            config_error: err.into(),
+                        }
+                    }
+                    TemplateError::IOError(err) => err.into(),
                 }
-                TemplateError::TOMLError(err) => Error::InvalidConfig {
+            }
+            ConfigError::Toml(err) => {
+                Error::InvalidConfig {
                     source_config,
-                    config_error: err.into(),
-                },
-                TemplateError::IOError(err) => err.into(),
-            },
-            ConfigError::Toml(err) => Error::InvalidConfig {
-                source_config,
-                config_error: ConfigError::Toml(err),
-            },
-            ConfigError::Config(_) => Error::InvalidConfig {
-                source_config,
-                config_error: err,
-            },
+                    config_error: ConfigError::Toml(err),
+                }
+            }
+            ConfigError::Config(_) => {
+                Error::InvalidConfig {
+                    source_config,
+                    config_error: err,
+                }
+            }
             _ => panic!("Unexpected error: {:#?}", err),
         }
     })?;
@@ -221,7 +234,7 @@ fn process_icon(
         OperationMode::Standard
     };
 
-    //TODO: Operation error handling
+    // TODO: Operation error handling
     let out: ProcessorPayload = config.do_operation(&mut in_img_reader, mode).unwrap();
 
     if let Some(output) = &output {
@@ -286,9 +299,12 @@ fn process_icon(
             "Failed to create dirs (This is a program error, not a config error! Please report!)",
         );
 
-        let mut file = File::create(path.as_path()).expect("Failed to create output file (This is a program error, not a config error! Please report!)");
+        let mut file = File::create(path.as_path()).expect(
+            "Failed to create output file (This is a program error, not a config error! Please \
+             report!)",
+        );
 
-        //TODO: figure out a better thing to do than just the unwrap
+        // TODO: figure out a better thing to do than just the unwrap
         match icon {
             OutputImage::Png(png) => {
                 png.save(&mut path).unwrap();

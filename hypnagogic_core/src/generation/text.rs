@@ -135,8 +135,9 @@ pub enum TextError {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use image::GenericImageView;
+
+    use super::*;
 
     #[test]
     fn char_lookup() {

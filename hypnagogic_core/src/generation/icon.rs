@@ -1,9 +1,14 @@
-use crate::config::blocks::generators::{MapIcon, Position};
-use crate::generation::error::GenerationError;
-use crate::generation::rect::{draw_border, draw_rect};
-use crate::generation::text::generate_text_block;
-use crate::util::color::fill_image_color;
 use image::DynamicImage;
+
+use crate::{
+    config::blocks::generators::{MapIcon, Position},
+    generation::{
+        error::GenerationError,
+        rect::{draw_border, draw_rect},
+        text::generate_text_block,
+    },
+    util::color::fill_image_color,
+};
 
 pub fn generate_map_icon(
     height: u32,
