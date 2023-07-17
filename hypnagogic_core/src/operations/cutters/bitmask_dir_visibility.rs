@@ -13,8 +13,14 @@ use crate::operations::cutters::bitmask_slice::{
     SIZE_OF_CARDINALS,
     SIZE_OF_DIAGONALS,
 };
-use crate::operations::error::ProcessorResult;
-use crate::operations::{IconOperationConfig, NamedIcon, OperationMode, ProcessorPayload};
+use crate::operations::error::{ProcessorError, ProcessorResult};
+use crate::operations::{
+    IconOperationConfig,
+    InputIcon,
+    NamedIcon,
+    OperationMode,
+    ProcessorPayload,
+};
 use crate::util::adjacency::Adjacency;
 use crate::util::corners::{Corner, Side};
 use crate::util::icon_ops::dedupe_frames;
@@ -31,13 +37,15 @@ pub struct BitmaskDirectionalVis {
 }
 
 impl IconOperationConfig for BitmaskDirectionalVis {
-    fn perform_operation<R: BufRead + Seek>(
+    fn perform_operation(
         &self,
-        input: &mut R,
+        input: &InputIcon,
         mode: OperationMode,
     ) -> ProcessorResult<ProcessorPayload> {
-        let mut img = image::load(input, ImageFormat::Png)?;
-        let (corners, prefabs) = self.bitmask_slice_config.generate_corners(&mut img)?;
+        let InputIcon::DynamicImage(img) = input else {
+            return Err(ProcessorError::FormatError("This operation only accepts raw images".to_string()));
+        };
+        let (corners, prefabs) = self.bitmask_slice_config.generate_corners(&img)?;
 
         let (_in_x, in_y) = img.dimensions();
         let num_frames = in_y / self.bitmask_slice_config.icon_size.y;

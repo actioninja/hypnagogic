@@ -15,6 +15,7 @@ use hypnagogic_core::config::template_resolver::error::TemplateError;
 use hypnagogic_core::config::template_resolver::file_resolver::FileResolver;
 use hypnagogic_core::operations::{
     IconOperationConfig,
+    InputIcon,
     NamedIcon,
     OperationMode,
     OutputImage,
@@ -203,40 +204,46 @@ fn process_icon(
             _ => panic!("Unexpected error: {:#?}", err),
         }
     })?;
-    let mut in_img_path = path.clone();
-    in_img_path.set_extension("png");
-    let in_img_file = File::open(in_img_path.as_path()).map_err(|_err| {
-        let source_config = path
-            .clone()
+
+    let mut input_icon_path = path.clone();
+    // funny hack: for double extensioned files (eg, .png.toml) calling
+    // set_extension with a blank string clears out the second extension,
+    // (.png.toml -> .png)
+    input_icon_path.set_extension("");
+
+    if !input_icon_path.exists() {
+        let source_config = path.file_name().unwrap().to_str().unwrap().to_string();
+        let expected = input_icon_path
             .file_name()
             .unwrap()
             .to_str()
             .unwrap()
             .to_string();
-        let expected = in_img_path
-            .clone()
-            .file_name()
-            .unwrap()
-            .to_str()
-            .unwrap()
-            .to_string();
-        let search_dir = path.clone().parent().unwrap().to_path_buf();
-        Error::InputNotFound {
+        let search_dir = path.parent().unwrap().to_path_buf();
+        return Err(Error::InputNotFound {
             source_config,
             expected,
             search_dir,
-        }
-    })?;
-    let mut in_img_reader = BufReader::new(in_img_file.try_clone()?);
+        });
+    }
+    let actual_extension = input_icon_path
+        .extension()
+        .unwrap()
+        .to_os_string()
+        .into_string()
+        .unwrap();
+    let icon_file = File::open(&input_icon_path)?;
+    let mut reader = BufReader::new(icon_file);
+    // todo: prettify this error
+    let input = InputIcon::from_reader(&mut reader, &actual_extension).unwrap();
 
     let mode = if debug {
         OperationMode::Debug
     } else {
         OperationMode::Standard
     };
-
     // TODO: Operation error handling
-    let out: ProcessorPayload = config.do_operation(&mut in_img_reader, mode).unwrap();
+    let out = config.do_operation(&input, mode).unwrap();
 
     if let Some(output) = &output {
         let output_path = Path::new(output);
@@ -273,18 +280,18 @@ fn process_icon(
 
     match out {
         ProcessorPayload::Single(inner) => {
-            let mut processed_path = process_path(in_img_path.clone(), None);
+            let mut processed_path = process_path(input_icon_path.clone(), None);
             processed_path.set_extension(inner.extension());
             out_paths.push((processed_path, *inner));
         }
         ProcessorPayload::SingleNamed(named) => {
-            let mut processed_path = process_path(in_img_path.clone(), Some(&named));
+            let mut processed_path = process_path(input_icon_path.clone(), Some(&named));
             processed_path.set_extension(named.image.extension());
             out_paths.push((processed_path, named.image))
         }
         ProcessorPayload::MultipleNamed(icons) => {
             for icon in icons {
-                let mut processed_path = process_path(in_img_path.clone(), Some(&icon));
+                let mut processed_path = process_path(input_icon_path.clone(), Some(&icon));
                 processed_path.set_extension(icon.image.extension());
                 out_paths.push((processed_path, icon.image))
             }
