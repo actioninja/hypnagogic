@@ -48,10 +48,25 @@ impl InputIcon {
     }
 }
 
+/// An output image, with a possible path hint and name hint.
 #[derive(Clone)]
 pub struct NamedIcon {
+    /// A hint for the path of the resulting image, if it has one
+    /// This is used to determine the relative path of the output, in relation
+    /// to the input file.
+    ///
+    /// If the input file is `foo/bar.png`, and the path hint is `baz`, the
+    /// output file will be `foo/baz/bar.png` (or `foo/baz/bar.dmi` if the
+    /// output format is dmi)
     pub path_hint: Option<String>,
+    /// A hint for the name of the resulting image. This is appended to the
+    /// input file name before the extension.
+    ///
+    /// If the input file is `foo/bar.png`, and the name hint is `baz`, the
+    /// output file will be `foo/bar-baz.png` (or `foo/bar-baz.dmi` if the
+    /// output format is dmi)
     pub name_hint: Option<String>,
+    /// The actual output image
     pub image: OutputImage,
 }
 
@@ -115,6 +130,7 @@ impl NamedIcon {
     }
 }
 
+/// Represents the possible actual output images of an icon operation
 #[derive(Clone)]
 pub enum OutputImage {
     Png(DynamicImage),
@@ -131,10 +147,17 @@ impl OutputImage {
     }
 }
 
+/// Represents the result of an icon operation
+/// It's entirely up to consumers to decide what to do with this
 #[derive(Clone)]
 pub enum ProcessorPayload {
+    /// A single icon, with no name or path hint.
+    /// This is the most common result, and generally is used to create a dmi
+    /// from a png
     Single(Box<OutputImage>),
+    /// A single icon, with a name and path hint. See [NamedIcon] for more info.
     SingleNamed(Box<NamedIcon>),
+    /// Multiple named icons. See [NamedIcon] for more info.
     MultipleNamed(Vec<NamedIcon>),
 }
 
@@ -145,6 +168,8 @@ impl ProcessorPayload {
     }
 }
 
+/// Possible generic modes of operation for an icon operation
+/// What these actually do is entirely up to the implementor
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Debug)]
 pub enum OperationMode {
     Standard,
@@ -152,11 +177,17 @@ pub enum OperationMode {
 }
 
 /// Implement this trait to create a new type of icon operation
+///
+/// Once implemented, it can be used in a processor by adding it to the
+/// `IconOperation` enum.
 #[enum_dispatch]
 pub trait IconOperationConfig {
     /// Represents performing an icon operation as defined by the implementor
     /// Should generally not be called directly, preferring to call via
-    /// `do_operation` # Errors
+    /// `do_operation`
+    ///
+    /// # Errors
+    ///
     /// Possible errors vary based on implementor; should be some kind of
     /// `ProcessorError::ImageError`
     fn perform_operation(
