@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use std::io::{BufRead, Read, Seek};
+use std::io::{BufRead, Seek};
 use std::path::{Path, PathBuf};
 
 use cutters::bitmask_dir_visibility::BitmaskDirectionalVis;

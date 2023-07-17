@@ -1,9 +1,9 @@
 use std::collections::BTreeMap;
-use std::io::{BufRead, Seek};
+
 
 use dmi::icon::{Icon, IconState};
 use fixed_map::Map;
-use image::{DynamicImage, GenericImageView, ImageFormat};
+use image::{DynamicImage, GenericImageView};
 use serde::{Deserialize, Serialize};
 
 use crate::config::blocks::cutters::{
@@ -70,11 +70,11 @@ impl IconOperationConfig for BitmaskWindows {
             map_icon: None,
         };
 
-        let (corners, prefabs) = bitmask_config.generate_corners(&img)?;
+        let (corners, prefabs) = bitmask_config.generate_corners(img)?;
         let assembled =
             bitmask_config.generate_icons(&corners, &prefabs, num_frames, SIZE_OF_DIAGONALS);
 
-        let mut alt_config = bitmask_config.clone();
+        let mut alt_config = bitmask_config;
 
         let mut positions = Map::new();
         positions.insert(CornerType::Convex, 5);
@@ -85,7 +85,7 @@ impl IconOperationConfig for BitmaskWindows {
 
         alt_config.positions = Positions(positions);
 
-        let (corners_alt, prefabs_alt) = alt_config.generate_corners(&img)?;
+        let (corners_alt, prefabs_alt) = alt_config.generate_corners(img)?;
         let assembled_alt =
             alt_config.generate_icons(&corners_alt, &prefabs_alt, num_frames, SIZE_OF_DIAGONALS);
 

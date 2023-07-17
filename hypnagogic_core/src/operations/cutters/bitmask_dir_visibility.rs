@@ -1,8 +1,8 @@
-use std::io::{BufRead, Seek};
+
 
 use dmi::icon::{Icon, IconState};
 use enum_iterator::all;
-use image::{imageops, DynamicImage, GenericImageView, ImageFormat};
+use image::{imageops, DynamicImage, GenericImageView};
 use serde::{Deserialize, Serialize};
 
 use crate::config::blocks::cutters::SlicePoint;
@@ -45,7 +45,7 @@ impl IconOperationConfig for BitmaskDirectionalVis {
         let InputIcon::DynamicImage(img) = input else {
             return Err(ProcessorError::FormatError("This operation only accepts raw images".to_string()));
         };
-        let (corners, prefabs) = self.bitmask_slice_config.generate_corners(&img)?;
+        let (corners, prefabs) = self.bitmask_slice_config.generate_corners(img)?;
 
         let (_in_x, in_y) = img.dimensions();
         let num_frames = in_y / self.bitmask_slice_config.icon_size.y;

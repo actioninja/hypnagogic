@@ -1,10 +1,10 @@
 use std::collections::{BTreeMap, HashMap};
-use std::io::{BufRead, Seek};
+
 
 use dmi::icon::{Icon, IconState};
 use enum_iterator::all;
 use fixed_map::Map;
-use image::{imageops, DynamicImage, GenericImageView, ImageFormat};
+use image::{imageops, DynamicImage, GenericImageView};
 use serde::{Deserialize, Serialize};
 use tracing::{debug, trace};
 
