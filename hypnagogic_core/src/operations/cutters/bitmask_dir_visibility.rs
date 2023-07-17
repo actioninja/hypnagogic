@@ -1,18 +1,25 @@
 use std::io::{BufRead, Seek};
 
-use crate::config::blocks::cutters::SlicePoint;
-use crate::generation::icon::generate_map_icon;
 use dmi::icon::{Icon, IconState};
 use enum_iterator::all;
 use image::{imageops, DynamicImage, GenericImageView, ImageFormat};
 use serde::{Deserialize, Serialize};
 
+use crate::config::blocks::cutters::SlicePoint;
+use crate::generation::icon::generate_map_icon;
 use crate::operations::cutters::bitmask_slice::{
-    BitmaskSlice, SideSpacing, SIZE_OF_CARDINALS, SIZE_OF_DIAGONALS,
+    BitmaskSlice,
+    SideSpacing,
+    SIZE_OF_CARDINALS,
+    SIZE_OF_DIAGONALS,
 };
 use crate::operations::error::{ProcessorError, ProcessorResult};
 use crate::operations::{
-    IconOperationConfig, InputIcon, NamedIcon, OperationMode, ProcessorPayload,
+    IconOperationConfig,
+    InputIcon,
+    NamedIcon,
+    OperationMode,
+    ProcessorPayload,
 };
 use crate::util::adjacency::Adjacency;
 use crate::util::corners::{Corner, Side};
@@ -121,7 +128,7 @@ impl IconOperationConfig for BitmaskDirectionalVis {
             let x = horizontal_side_info.start;
             let width = horizontal_side_info.step();
 
-            //todo: This is awful, maybe a better way to do this?
+            // todo: This is awful, maybe a better way to do this?
             let (y, height) = if vertical == Side::North {
                 (0, self.slice_point.get(vertical).unwrap())
             } else {
@@ -186,7 +193,7 @@ impl IconOperationConfig for BitmaskDirectionalVis {
     }
 
     fn verify_config(&self) -> ProcessorResult<()> {
-        //TODO: actually verify config
+        // TODO: actually verify config
         Ok(())
     }
 }
@@ -194,27 +201,36 @@ impl IconOperationConfig for BitmaskDirectionalVis {
 impl BitmaskDirectionalVis {
     /// Gets the side cutter info for a given side based on the slice point
     /// # Panics
-    /// Can panic if the `slice_point` map is unpopulated, which shouldn't happen if initialized correctly
-    /// Generally indicates a bad implementation of `BitmaskDirectionalVis`
+    /// Can panic if the `slice_point` map is unpopulated, which shouldn't
+    /// happen if initialized correctly Generally indicates a bad
+    /// implementation of `BitmaskDirectionalVis`
     #[must_use]
     pub fn get_side_cuts(&self, side: Side) -> SideSpacing {
         match side {
-            Side::North => SideSpacing {
-                start: 0,
-                end: self.slice_point.get(Side::North).unwrap(),
-            },
-            Side::South => SideSpacing {
-                start: self.slice_point.get(Side::South).unwrap(),
-                end: self.bitmask_slice_config.icon_size.y,
-            },
-            Side::East => SideSpacing {
-                start: self.slice_point.get(Side::East).unwrap(),
-                end: self.bitmask_slice_config.icon_size.x,
-            },
-            Side::West => SideSpacing {
-                start: 0,
-                end: self.slice_point.get(Side::West).unwrap(),
-            },
+            Side::North => {
+                SideSpacing {
+                    start: 0,
+                    end: self.slice_point.get(Side::North).unwrap(),
+                }
+            }
+            Side::South => {
+                SideSpacing {
+                    start: self.slice_point.get(Side::South).unwrap(),
+                    end: self.bitmask_slice_config.icon_size.y,
+                }
+            }
+            Side::East => {
+                SideSpacing {
+                    start: self.slice_point.get(Side::East).unwrap(),
+                    end: self.bitmask_slice_config.icon_size.x,
+                }
+            }
+            Side::West => {
+                SideSpacing {
+                    start: 0,
+                    end: self.slice_point.get(Side::West).unwrap(),
+                }
+            }
         }
     }
 }

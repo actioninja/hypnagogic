@@ -1,7 +1,9 @@
-use crate::util::corners::{CornerType, Side};
+use std::collections::BTreeMap;
+
 use fixed_map::Map;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use std::collections::BTreeMap;
+
+use crate::util::corners::{CornerType, Side};
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub struct IconSize {

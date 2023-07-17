@@ -1,10 +1,11 @@
+use std::fmt::{Display, Formatter};
+
 use enum_iterator::Sequence;
 use fixed_map::Key;
 use serde::{Deserialize, Serialize};
-use std::fmt::{Display, Formatter};
 
-/// Represents a "side" of a given tile. Directions correspond to unrotated cardinal directions,
-/// with "North" pointing "upwards."
+/// Represents a "side" of a given tile. Directions correspond to unrotated
+/// cardinal directions, with "North" pointing "upwards."
 #[derive(
     Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd, Debug, Sequence, Serialize, Deserialize, Key,
 )]
@@ -51,16 +52,17 @@ impl Side {
         }
     }
 
-    /// Returns an array of directions in the order that byond specifies directions.
-    /// Yes, it is correct that "South" is done before North
+    /// Returns an array of directions in the order that byond specifies
+    /// directions. Yes, it is correct that "South" is done before North
     #[must_use]
     pub const fn dmi_cardinals() -> [Self; 4] {
         [Self::South, Self::North, Self::East, Self::West]
     }
 
-    /// Returns a boolean determining whether a Side is a "vertical" side. "North" and "South"
-    /// return true and vice versa. Maybe this is reversed, depends on whether you think of the side
-    /// as the line making it up or not.
+    /// Returns a boolean determining whether a Side is a "vertical" side.
+    /// "North" and "South" return true and vice versa. Maybe this is
+    /// reversed, depends on whether you think of the side as the line
+    /// making it up or not.
     #[must_use]
     pub const fn is_vertical(self) -> bool {
         match self {
@@ -102,7 +104,8 @@ impl Corner {
     }
 }
 
-/// Represents the five possible given states for a corner to be in when bitmask smoothing
+/// Represents the five possible given states for a corner to be in when bitmask
+/// smoothing
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd, Debug, Deserialize, Serialize, Key)]
 #[serde(rename_all = "snake_case")]
 pub enum CornerType {
@@ -139,8 +142,8 @@ impl Display for CornerType {
 }
 
 impl CornerType {
-    /// When only smoothing along cardinals, the "Flat" corner type is not used. This returns a
-    /// Vec of the enum variants except for `Flat`.
+    /// When only smoothing along cardinals, the "Flat" corner type is not used.
+    /// This returns a Vec of the enum variants except for `Flat`.
     #[must_use]
     pub fn cardinal() -> Vec<Self> {
         vec![

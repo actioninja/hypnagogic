@@ -1,6 +1,7 @@
-use crate::util::color::Color;
 use dmi::icon::IconState;
 use image::{DynamicImage, GenericImageView};
+
+use crate::util::color::Color;
 
 // Removes duplicate frames from the icon state's animation, if it has any
 #[must_use]
@@ -18,8 +19,9 @@ pub fn dedupe_frames(icon_state: IconState) -> IconState {
         return icon_state;
     };
 
-    // As we walk through the frames in this icon state, we're going to keep track of the ones that
-    // Are duplicates, and "dedupe" them by simply adding extra frame delay and removing the extra frame
+    // As we walk through the frames in this icon state, we're going to keep track
+    // of the ones that Are duplicates, and "dedupe" them by simply adding extra
+    // frame delay and removing the extra frame
     let deduped_anim = current_delays
         .iter()
         .zip(icon_state.images.into_iter())

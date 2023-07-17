@@ -1,6 +1,7 @@
+use std::fs::read_to_string;
+
 use crate::util::deep_dir_compare::deep_compare_path;
 use crate::util::run::run_with_args;
-use std::fs::read_to_string;
 
 pub struct DirTester {
     dir: std::path::PathBuf,

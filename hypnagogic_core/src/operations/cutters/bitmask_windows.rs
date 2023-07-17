@@ -1,3 +1,19 @@
+use std::collections::BTreeMap;
+use std::io::{BufRead, Seek};
+
+use dmi::icon::{Icon, IconState};
+use fixed_map::Map;
+use image::{DynamicImage, GenericImageView, ImageFormat};
+use serde::{Deserialize, Serialize};
+
+use crate::config::blocks::cutters::{
+    Animation,
+    CutPosition,
+    IconSize,
+    OutputIconPosition,
+    OutputIconSize,
+    Positions,
+};
 use crate::operations::cutters::bitmask_slice::{BitmaskSlice, SIZE_OF_DIAGONALS};
 use crate::operations::error::{ProcessorError, ProcessorResult};
 use crate::operations::{IconOperationConfig, InputIcon, OperationMode, ProcessorPayload};
@@ -5,17 +21,6 @@ use crate::util::adjacency::Adjacency;
 use crate::util::corners::CornerType;
 use crate::util::icon_ops::dedupe_frames;
 use crate::util::repeat_for;
-use dmi::icon::{Icon, IconState};
-
-use fixed_map::Map;
-use image::{DynamicImage, GenericImageView, ImageFormat};
-use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
-use std::io::{BufRead, Seek};
-
-use crate::config::blocks::cutters::{
-    Animation, CutPosition, IconSize, OutputIconPosition, OutputIconSize, Positions,
-};
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct BitmaskWindows {
@@ -154,7 +159,7 @@ impl IconOperationConfig for BitmaskWindows {
     }
 
     fn verify_config(&self) -> ProcessorResult<()> {
-        //TODO: Actually verify config
+        // TODO: Actually verify config
         Ok(())
     }
 }

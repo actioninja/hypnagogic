@@ -1,8 +1,9 @@
+use serde::{Deserialize, Serialize};
+
 use crate::generation::rect::{Border, BorderStyle};
 use crate::generation::text::Alignment;
 use crate::util::color::Color;
 use crate::util::icon_ops::pick_contrasting_colors;
-use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]

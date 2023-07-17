@@ -3,8 +3,8 @@ use core::result::Result::{Err, Ok};
 use std::fmt::Formatter;
 use std::fs;
 use std::path::{Path, PathBuf};
-use toml::Value;
 
+use toml::Value;
 use tracing::{debug, trace};
 
 use crate::config::template_resolver::error::{TemplateError, TemplateResult};

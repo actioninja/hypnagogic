@@ -1,11 +1,10 @@
 use std::io::{read_to_string, Read, Seek};
 
 use serde::Deserialize;
+use template_resolver::TemplateResolver;
 use toml::map::Map;
 use toml::Value;
 use tracing::{debug, trace};
-
-use template_resolver::TemplateResolver;
 
 use crate::config::error::ConfigResult;
 use crate::config::template_resolver::error::TemplateResult;
@@ -58,10 +57,10 @@ pub fn resolve_templates(first: Value, resolver: impl TemplateResolver) -> Templ
     let mut extracted_template = extract_template_string(&mut current);
     trace!(extracted = ?extracted_template, "extracted first template");
 
-    //push the first on to the stack to be resolved
+    // push the first on to the stack to be resolved
     stack.push(current.clone());
     let mut recursion_cap = 0;
-    //Drill in to templates and resolve until no new ones found
+    // Drill in to templates and resolve until no new ones found
     while recursion_cap < 100 {
         if let Some(template) = &extracted_template {
             current = resolver.resolve(template.as_str())?;
@@ -74,7 +73,7 @@ pub fn resolve_templates(first: Value, resolver: impl TemplateResolver) -> Templ
         }
     }
     trace!(num_in_chain = ?stack.len(), stack = ?stack, "Finished resolving templates");
-    //merge stack in to one hashmap
+    // merge stack in to one hashmap
     let mut out: Value = Value::Table(Map::new());
     for conf in stack.iter_mut().rev() {
         deep_merge_toml(&mut out, conf.clone());
@@ -159,9 +158,8 @@ mod test {
     }
 
     mod config_templates {
-        use crate::config::resolve_templates;
-
         use super::*;
+        use crate::config::resolve_templates;
 
         #[test]
         fn flattening_simple() {
@@ -214,9 +212,8 @@ mod test {
     }
 
     mod config {
-        use crate::operations::cutters::bitmask_slice::BitmaskSlice;
-
         use super::*;
+        use crate::operations::cutters::bitmask_slice::BitmaskSlice;
 
         #[test]
         fn symmetrical_serialize() {

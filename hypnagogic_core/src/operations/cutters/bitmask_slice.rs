@@ -1,12 +1,6 @@
 use std::collections::{BTreeMap, HashMap};
 use std::io::{BufRead, Seek};
 
-use crate::config::blocks::cutters::{
-    Animation, CutPosition, IconSize, OutputIconPosition, OutputIconSize, Positions,
-    PrefabOverlays, Prefabs,
-};
-use crate::config::blocks::generators::MapIcon;
-use crate::generation::icon::generate_map_icon;
 use dmi::icon::{Icon, IconState};
 use enum_iterator::all;
 use fixed_map::Map;
@@ -14,9 +8,26 @@ use image::{imageops, DynamicImage, GenericImageView, ImageFormat};
 use serde::{Deserialize, Serialize};
 use tracing::{debug, trace};
 
+use crate::config::blocks::cutters::{
+    Animation,
+    CutPosition,
+    IconSize,
+    OutputIconPosition,
+    OutputIconSize,
+    Positions,
+    PrefabOverlays,
+    Prefabs,
+};
+use crate::config::blocks::generators::MapIcon;
+use crate::generation::icon::generate_map_icon;
 use crate::operations::error::{ProcessorError, ProcessorResult};
 use crate::operations::{
-    IconOperationConfig, InputIcon, NamedIcon, OperationMode, OutputImage, ProcessorPayload,
+    IconOperationConfig,
+    InputIcon,
+    NamedIcon,
+    OperationMode,
+    OutputImage,
+    ProcessorPayload,
 };
 use crate::util::adjacency::Adjacency;
 use crate::util::corners::{Corner, CornerType, Side};
@@ -90,7 +101,7 @@ impl IconOperationConfig for BitmaskSlice {
             vec![Adjacency::S]
         };
 
-        //First phase: generate icons
+        // First phase: generate icons
         let assembled = self.generate_icons(&corners, &prefabs, num_frames, possible_states);
 
         // Second phase: map to byond icon states and produce dirs if need
@@ -163,7 +174,7 @@ impl IconOperationConfig for BitmaskSlice {
     }
 
     fn verify_config(&self) -> ProcessorResult<()> {
-        //TODO: Actual verification
+        // TODO: Actual verification
         Ok(())
     }
 }
@@ -171,8 +182,8 @@ impl IconOperationConfig for BitmaskSlice {
 type CornerPayload = Map<CornerType, Map<Corner, Vec<DynamicImage>>>;
 type PrefabPayload = HashMap<Adjacency, Vec<DynamicImage>>;
 
-//possible icon set is the powerset of the possible directions
-//the size of a powerset is always 2^n where n is number of discrete elements
+// possible icon set is the powerset of the possible directions
+// the size of a powerset is always 2^n where n is number of discrete elements
 pub const SIZE_OF_CARDINALS: usize = usize::pow(2, 4);
 pub const SIZE_OF_DIAGONALS: usize = usize::pow(2, 8);
 
@@ -373,22 +384,30 @@ impl BitmaskSlice {
     #[must_use]
     pub fn get_side_info(&self, side: Side) -> SideSpacing {
         match side {
-            Side::North => SideSpacing {
-                start: 0,
-                end: self.cut_pos.y,
-            },
-            Side::South => SideSpacing {
-                start: self.cut_pos.y,
-                end: self.icon_size.y,
-            },
-            Side::East => SideSpacing {
-                start: self.cut_pos.x,
-                end: self.icon_size.x,
-            },
-            Side::West => SideSpacing {
-                start: 0,
-                end: self.cut_pos.x,
-            },
+            Side::North => {
+                SideSpacing {
+                    start: 0,
+                    end: self.cut_pos.y,
+                }
+            }
+            Side::South => {
+                SideSpacing {
+                    start: self.cut_pos.y,
+                    end: self.icon_size.y,
+                }
+            }
+            Side::East => {
+                SideSpacing {
+                    start: self.cut_pos.x,
+                    end: self.icon_size.x,
+                }
+            }
+            Side::West => {
+                SideSpacing {
+                    start: 0,
+                    end: self.cut_pos.x,
+                }
+            }
         }
     }
 }
