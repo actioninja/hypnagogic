@@ -1,5 +1,4 @@
 use std::collections::{BTreeMap, HashMap};
-use std::io::{BufRead, Seek};
 
 use crate::config::blocks::cutters::{
     Animation, CutPosition, IconSize, OutputIconPosition, OutputIconSize, Positions,
@@ -10,13 +9,13 @@ use crate::generation::icon::generate_map_icon;
 use dmi::icon::{Icon, IconState};
 use enum_iterator::all;
 use fixed_map::Map;
-use image::{imageops, DynamicImage, GenericImageView, ImageFormat};
+use image::{imageops, DynamicImage, GenericImageView};
 use serde::{Deserialize, Serialize};
 use tracing::{debug, trace};
 
-use crate::operations::error::ProcessorResult;
+use crate::operations::error::{ProcessorError, ProcessorResult};
 use crate::operations::{
-    IconOperationConfig, NamedIcon, OperationMode, OutputImage, ProcessorPayload,
+    IconOperationConfig, InputIcon, NamedIcon, OperationMode, OutputImage, ProcessorPayload,
 };
 use crate::util::adjacency::Adjacency;
 use crate::util::corners::{Corner, CornerType, Side};
@@ -64,14 +63,16 @@ pub struct BitmaskSlice {
 
 impl IconOperationConfig for BitmaskSlice {
     #[tracing::instrument(skip(input))]
-    fn perform_operation<R: BufRead + Seek>(
+    fn perform_operation(
         &self,
-        input: &mut R,
+        input: &InputIcon,
         mode: OperationMode,
     ) -> ProcessorResult<ProcessorPayload> {
         debug!("Starting bitmask slice icon op");
-        let mut img = image::load(input, ImageFormat::Png)?;
-        let (corners, prefabs) = self.generate_corners(&mut img)?;
+        let InputIcon::DynamicImage(img) = input else {
+          return Err(ProcessorError::FormatError("This operation only accepts raw images".to_string()));  
+        };
+        let (corners, prefabs) = self.generate_corners(img)?;
 
         let (_in_x, in_y) = img.dimensions();
         let num_frames = in_y / self.icon_size.y;
@@ -224,7 +225,7 @@ impl BitmaskSlice {
     #[tracing::instrument(skip(img))]
     pub fn generate_corners(
         &self,
-        img: &mut DynamicImage,
+        img: &DynamicImage,
     ) -> ProcessorResult<(CornerPayload, PrefabPayload)> {
         let (_width, height) = img.dimensions();
 
