@@ -22,33 +22,30 @@ pub fn dedupe_frames(icon_state: IconState) -> IconState {
     // As we walk through the frames in this icon state, we're going to keep track
     // of the ones that Are duplicates, and "dedupe" them by simply adding extra
     // frame delay and removing the extra frame
-    let deduped_anim = current_delays
-        .iter()
-        .zip(icon_state.images.into_iter())
-        .fold(
-            AccumulatedAnim {
-                delays: Vec::new(),
-                frames: Vec::new(),
-                working_index: 0,
-            },
-            |mut acc, elem| {
-                let (&current_delay, current_frame) = elem;
-                if acc.frames.is_empty() {
-                    acc.delays.push(current_delay);
-                    acc.frames.push(current_frame);
-                    return acc;
-                }
-                let current_index = acc.working_index;
-                if acc.frames[current_index as usize] == current_frame {
-                    acc.delays[current_index as usize] += current_delay;
-                } else {
-                    acc.delays.push(current_delay);
-                    acc.frames.push(current_frame);
-                    acc.working_index += 1;
-                }
-                acc
-            },
-        );
+    let deduped_anim = current_delays.iter().zip(icon_state.images).fold(
+        AccumulatedAnim {
+            delays: Vec::new(),
+            frames: Vec::new(),
+            working_index: 0,
+        },
+        |mut acc, elem| {
+            let (&current_delay, current_frame) = elem;
+            if acc.frames.is_empty() {
+                acc.delays.push(current_delay);
+                acc.frames.push(current_frame);
+                return acc;
+            }
+            let current_index = acc.working_index;
+            if acc.frames[current_index as usize] == current_frame {
+                acc.delays[current_index as usize] += current_delay;
+            } else {
+                acc.delays.push(current_delay);
+                acc.frames.push(current_frame);
+                acc.working_index += 1;
+            }
+            acc
+        },
+    );
 
     IconState {
         frames: deduped_anim.working_index + 1,
@@ -73,7 +70,7 @@ pub fn colors_in_image(image: &DynamicImage) -> Vec<Color> {
         .collect()
 }
 
-pub fn sort_colors_by_luminance(colors: &mut Vec<Color>) {
+pub fn sort_colors_by_luminance(colors: &mut [Color]) {
     colors.sort_by(|a, b| a.luminance().partial_cmp(&b.luminance()).unwrap());
 }
 

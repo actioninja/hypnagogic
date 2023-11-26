@@ -1,6 +1,5 @@
 use std::collections::{BTreeMap, HashMap};
 
-
 use dmi::icon::{Icon, IconState};
 use enum_iterator::all;
 use fixed_map::Map;
@@ -82,7 +81,9 @@ impl IconOperationConfig for BitmaskSlice {
     ) -> ProcessorResult<ProcessorPayload> {
         debug!("Starting bitmask slice icon op");
         let InputIcon::DynamicImage(img) = input else {
-          return Err(ProcessorError::FormatError("This operation only accepts raw images".to_string()));  
+            return Err(ProcessorError::FormatError(
+                "This operation only accepts raw images".to_string(),
+            ));
         };
         let (corners, prefabs) = self.generate_corners(img)?;
 
@@ -358,13 +359,13 @@ impl BitmaskSlice {
                 out.push(NamedIcon::new(
                     "DEBUGOUT/CORNERS/",
                     &format!("CORNER-{corner_type:?}-{corner:?}"),
-                    OutputImage::Png(vec.get(0).unwrap().clone()),
+                    OutputImage::Png(vec.first().unwrap().clone()),
                 ));
                 // Reassemble the input image from corners (minus prefabs and frames)
                 let (horizontal, vertical) = corner.sides_of_corner();
                 let horizontal = self.get_side_info(horizontal);
                 let vertical = self.get_side_info(vertical);
-                let frame = vec.get(0).unwrap();
+                let frame = vec.first().unwrap();
                 imageops::replace(
                     &mut corners_image,
                     frame,
