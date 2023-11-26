@@ -70,7 +70,7 @@ pub fn colors_in_image(image: &DynamicImage) -> Vec<Color> {
         .collect()
 }
 
-pub fn sort_colors_by_luminance(colors: &mut Vec<Color>) {
+pub fn sort_colors_by_luminance(colors: &mut [Color]) {
     colors.sort_by(|a, b| a.luminance().partial_cmp(&b.luminance()).unwrap());
 }
 

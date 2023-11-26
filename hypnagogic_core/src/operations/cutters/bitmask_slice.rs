@@ -359,13 +359,13 @@ impl BitmaskSlice {
                 out.push(NamedIcon::new(
                     "DEBUGOUT/CORNERS/",
                     &format!("CORNER-{corner_type:?}-{corner:?}"),
-                    OutputImage::Png(vec.get(0).unwrap().clone()),
+                    OutputImage::Png(vec.first().unwrap().clone()),
                 ));
                 // Reassemble the input image from corners (minus prefabs and frames)
                 let (horizontal, vertical) = corner.sides_of_corner();
                 let horizontal = self.get_side_info(horizontal);
                 let vertical = self.get_side_info(vertical);
-                let frame = vec.get(0).unwrap();
+                let frame = vec.first().unwrap();
                 imageops::replace(
                     &mut corners_image,
                     frame,
