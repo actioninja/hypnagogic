@@ -6,7 +6,12 @@ use image::{DynamicImage, GenericImageView};
 use serde::{Deserialize, Serialize};
 
 use crate::config::blocks::cutters::{
-    Animation, CutPosition, IconSize, OutputIconPosition, OutputIconSize, Positions,
+    Animation,
+    CutPosition,
+    IconSize,
+    OutputIconPosition,
+    OutputIconSize,
+    Positions,
 };
 use crate::operations::cutters::bitmask_slice::{BitmaskSlice, SIZE_OF_DIAGONALS};
 use crate::operations::error::{ProcessorError, ProcessorResult};
