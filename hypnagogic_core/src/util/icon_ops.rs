@@ -24,7 +24,7 @@ pub fn dedupe_frames(icon_state: IconState) -> IconState {
     // frame delay and removing the extra frame
     let deduped_anim = current_delays
         .iter()
-        .zip(icon_state.images.into_iter())
+        .zip(icon_state.images)
         .fold(
             AccumulatedAnim {
                 delays: Vec::new(),
