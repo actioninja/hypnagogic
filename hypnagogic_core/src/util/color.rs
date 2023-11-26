@@ -44,7 +44,9 @@ impl Color {
     /// and /or fails to parse
     #[allow(clippy::missing_panics_doc)] // shouldn't be able to panic
     pub fn from_hex_str(hex_str: &str) -> Result<Self, HexConversionError> {
-        let Some(hex_str) = hex_str.strip_prefix('#') else { return Err(HexConversionError::MissingHash(hex_str.to_string())) };
+        let Some(hex_str) = hex_str.strip_prefix('#') else {
+            return Err(HexConversionError::MissingHash(hex_str.to_string()));
+        };
 
         let hex_str = match hex_str.len() {
             3 | 4 => {

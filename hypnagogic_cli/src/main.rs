@@ -14,12 +14,7 @@ use hypnagogic_core::config::read_config;
 use hypnagogic_core::config::template_resolver::error::TemplateError;
 use hypnagogic_core::config::template_resolver::file_resolver::FileResolver;
 use hypnagogic_core::operations::{
-    IconOperationConfig,
-    InputIcon,
-    NamedIcon,
-    OperationMode,
-    OutputImage,
-    ProcessorPayload,
+    IconOperationConfig, InputIcon, NamedIcon, OperationMode, OutputImage, ProcessorPayload,
 };
 use rayon::prelude::*;
 use tracing::{debug, info, Level};
@@ -171,36 +166,28 @@ fn process_icon(
             .unwrap()
             .to_string();
         match err {
-            ConfigError::Template(template_err) => {
-                match template_err {
-                    TemplateError::FailedToFindTemplate(template_string, expected_path) => {
-                        Error::TemplateNotFound {
-                            source_config,
-                            template_string,
-                            expected_path,
-                        }
+            ConfigError::Template(template_err) => match template_err {
+                TemplateError::FailedToFindTemplate(template_string, expected_path) => {
+                    Error::TemplateNotFound {
+                        source_config,
+                        template_string,
+                        expected_path,
                     }
-                    TemplateError::TOMLError(err) => {
-                        Error::InvalidConfig {
-                            source_config,
-                            config_error: err.into(),
-                        }
-                    }
-                    TemplateError::IOError(err) => err.into(),
                 }
-            }
-            ConfigError::Toml(err) => {
-                Error::InvalidConfig {
+                TemplateError::TOMLError(err) => Error::InvalidConfig {
                     source_config,
-                    config_error: ConfigError::Toml(err),
-                }
-            }
-            ConfigError::Config(_) => {
-                Error::InvalidConfig {
-                    source_config,
-                    config_error: err,
-                }
-            }
+                    config_error: err.into(),
+                },
+                TemplateError::IOError(err) => err.into(),
+            },
+            ConfigError::Toml(err) => Error::InvalidConfig {
+                source_config,
+                config_error: ConfigError::Toml(err),
+            },
+            ConfigError::Config(_) => Error::InvalidConfig {
+                source_config,
+                config_error: err,
+            },
             _ => panic!("Unexpected error: {:#?}", err),
         }
     })?;

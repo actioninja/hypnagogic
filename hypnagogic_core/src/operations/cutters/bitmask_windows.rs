@@ -1,18 +1,12 @@
 use std::collections::BTreeMap;
 
-
 use dmi::icon::{Icon, IconState};
 use fixed_map::Map;
 use image::{DynamicImage, GenericImageView};
 use serde::{Deserialize, Serialize};
 
 use crate::config::blocks::cutters::{
-    Animation,
-    CutPosition,
-    IconSize,
-    OutputIconPosition,
-    OutputIconSize,
-    Positions,
+    Animation, CutPosition, IconSize, OutputIconPosition, OutputIconSize, Positions,
 };
 use crate::operations::cutters::bitmask_slice::{BitmaskSlice, SIZE_OF_DIAGONALS};
 use crate::operations::error::{ProcessorError, ProcessorResult};
@@ -40,7 +34,9 @@ impl IconOperationConfig for BitmaskWindows {
         mode: OperationMode,
     ) -> ProcessorResult<ProcessorPayload> {
         let InputIcon::DynamicImage(img) = input else {
-            return Err(ProcessorError::FormatError("This operation only accepts raw images".to_string()));
+            return Err(ProcessorError::FormatError(
+                "This operation only accepts raw images".to_string(),
+            ));
         };
 
         let (_in_x, in_y) = img.dimensions();

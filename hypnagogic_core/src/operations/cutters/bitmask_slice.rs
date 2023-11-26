@@ -1,6 +1,5 @@
 use std::collections::{BTreeMap, HashMap};
 
-
 use dmi::icon::{Icon, IconState};
 use enum_iterator::all;
 use fixed_map::Map;
@@ -9,25 +8,14 @@ use serde::{Deserialize, Serialize};
 use tracing::{debug, trace};
 
 use crate::config::blocks::cutters::{
-    Animation,
-    CutPosition,
-    IconSize,
-    OutputIconPosition,
-    OutputIconSize,
-    Positions,
-    PrefabOverlays,
-    Prefabs,
+    Animation, CutPosition, IconSize, OutputIconPosition, OutputIconSize, Positions,
+    PrefabOverlays, Prefabs,
 };
 use crate::config::blocks::generators::MapIcon;
 use crate::generation::icon::generate_map_icon;
 use crate::operations::error::{ProcessorError, ProcessorResult};
 use crate::operations::{
-    IconOperationConfig,
-    InputIcon,
-    NamedIcon,
-    OperationMode,
-    OutputImage,
-    ProcessorPayload,
+    IconOperationConfig, InputIcon, NamedIcon, OperationMode, OutputImage, ProcessorPayload,
 };
 use crate::util::adjacency::Adjacency;
 use crate::util::corners::{Corner, CornerType, Side};
@@ -82,7 +70,9 @@ impl IconOperationConfig for BitmaskSlice {
     ) -> ProcessorResult<ProcessorPayload> {
         debug!("Starting bitmask slice icon op");
         let InputIcon::DynamicImage(img) = input else {
-          return Err(ProcessorError::FormatError("This operation only accepts raw images".to_string()));  
+            return Err(ProcessorError::FormatError(
+                "This operation only accepts raw images".to_string(),
+            ));
         };
         let (corners, prefabs) = self.generate_corners(img)?;
 
@@ -384,30 +374,22 @@ impl BitmaskSlice {
     #[must_use]
     pub fn get_side_info(&self, side: Side) -> SideSpacing {
         match side {
-            Side::North => {
-                SideSpacing {
-                    start: 0,
-                    end: self.cut_pos.y,
-                }
-            }
-            Side::South => {
-                SideSpacing {
-                    start: self.cut_pos.y,
-                    end: self.icon_size.y,
-                }
-            }
-            Side::East => {
-                SideSpacing {
-                    start: self.cut_pos.x,
-                    end: self.icon_size.x,
-                }
-            }
-            Side::West => {
-                SideSpacing {
-                    start: 0,
-                    end: self.cut_pos.x,
-                }
-            }
+            Side::North => SideSpacing {
+                start: 0,
+                end: self.cut_pos.y,
+            },
+            Side::South => SideSpacing {
+                start: self.cut_pos.y,
+                end: self.icon_size.y,
+            },
+            Side::East => SideSpacing {
+                start: self.cut_pos.x,
+                end: self.icon_size.x,
+            },
+            Side::West => SideSpacing {
+                start: 0,
+                end: self.cut_pos.x,
+            },
         }
     }
 }
