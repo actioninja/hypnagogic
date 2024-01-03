@@ -6,6 +6,8 @@ pub enum ProcessorError {
     FormatError(String),
     #[error("Error processing image:\n{0}")]
     ImageError(#[from] image::error::ImageError),
+    #[error("Error restoring dmi:\n{0}")]
+    DmiError(String),
     #[error("Error generating icon for processor:\n{0}")]
     GenerationError(#[from] crate::generation::error::GenerationError),
     #[error("Error within image config:")]
