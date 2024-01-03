@@ -1,7 +1,6 @@
 use dmi::icon::IconState;
 use image::{DynamicImage, GenericImage};
 use serde::{Deserialize, Serialize};
-use std::cmp::Ordering;
 use tracing::debug;
 
 use crate::config::blocks::cutters::StringMap;
