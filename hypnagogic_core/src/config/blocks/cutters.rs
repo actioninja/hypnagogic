@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 
 use fixed_map::Map;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -101,6 +101,52 @@ impl Default for Positions {
         map.insert(CornerType::Horizontal, 2);
         map.insert(CornerType::Vertical, 3);
         Positions(map)
+    }
+}
+
+#[derive(Clone, Eq, PartialEq, Debug, Default)]
+pub struct StringMap(pub HashMap<String, String>);
+
+impl StringMap {
+    #[must_use]
+    pub fn get(&self, key: &str) -> Option<&String> {
+        self.0.get(key)
+    }
+}
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[serde(transparent)]
+struct StringMapHelper {
+    map: HashMap<String, String>,
+}
+
+impl Serialize for StringMap {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut map = HashMap::new();
+
+        for (k, v) in &self.0 {
+            map.insert(k.clone(), v.clone());
+        }
+
+        StringMapHelper { map }.serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for StringMap {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Deserialize::deserialize(deserializer).map(|StringMapHelper { map }| {
+            let mut result = HashMap::new();
+            for (k, v) in map {
+                result.insert(k, v);
+            }
+            StringMap(result)
+        })
     }
 }
 

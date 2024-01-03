@@ -18,7 +18,9 @@ use hypnagogic_core::operations::{
     InputIcon,
     NamedIcon,
     OperationMode,
+    Output,
     OutputImage,
+    OutputText,
     ProcessorPayload,
 };
 use rayon::prelude::*;
@@ -250,55 +252,9 @@ fn process_icon(
         fs::create_dir_all(output_path)?;
     }
 
-    let process_path = |path: PathBuf, named_img: Option<&NamedIcon>| -> PathBuf {
-        debug!(path = ?path, img = ?named_img, "Processing path");
-        let processed_path = if let Some(named_img) = named_img {
-            named_img.build_path(path.as_path())
-        } else {
-            PathBuf::from(path.file_name().unwrap().to_str().unwrap().to_string())
-        };
-        debug!(path = ?processed_path, "Processed path");
+    let out_paths: Vec<(PathBuf, Output)> = handle_payload(out, input_icon_path, output, flatten);
 
-        let parent_path = path.parent().unwrap();
-
-        let mut path = PathBuf::new();
-
-        if let Some(output) = &output {
-            path = PathBuf::from(output).join(&path);
-        }
-
-        if !flatten {
-            path.push(parent_path);
-        }
-        path.push(processed_path);
-        info!(path = ?path, "Processed path");
-
-        path
-    };
-
-    let mut out_paths: Vec<(PathBuf, OutputImage)> = vec![];
-
-    match out {
-        ProcessorPayload::Single(inner) => {
-            let mut processed_path = process_path(input_icon_path.clone(), None);
-            processed_path.set_extension(inner.extension());
-            out_paths.push((processed_path, *inner));
-        }
-        ProcessorPayload::SingleNamed(named) => {
-            let mut processed_path = process_path(input_icon_path.clone(), Some(&named));
-            processed_path.set_extension(named.image.extension());
-            out_paths.push((processed_path, named.image))
-        }
-        ProcessorPayload::MultipleNamed(icons) => {
-            for icon in icons {
-                let mut processed_path = process_path(input_icon_path.clone(), Some(&icon));
-                processed_path.set_extension(icon.image.extension());
-                out_paths.push((processed_path, icon.image))
-            }
-        }
-    }
-
-    for (mut path, icon) in out_paths {
+    for (mut path, output) in out_paths {
         let parent_dir = path.parent().expect(
             "Failed to get parent? (this is a program error, not a config error! Please report!)",
         );
@@ -313,14 +269,92 @@ fn process_icon(
         );
 
         // TODO: figure out a better thing to do than just the unwrap
-        match icon {
-            OutputImage::Png(png) => {
-                png.save(&mut path).unwrap();
+        match output {
+            Output::Image(icon) => {
+                match icon {
+                    OutputImage::Png(png) => {
+                        png.save(&mut path).unwrap();
+                    }
+                    OutputImage::Dmi(dmi) => {
+                        dmi.save(&mut file).unwrap();
+                    }
+                }
             }
-            OutputImage::Dmi(dmi) => {
-                dmi.save(&mut file).unwrap();
+            Output::Text(text) => {
+                match text {
+                    OutputText::PngConfig(config) | OutputText::DmiConfig(config) => {
+                        fs::write(path, config).expect(
+                            "Failed to write config text, (This is a program error, not a config \
+                             error! Please report!)",
+                        )
+                    }
+                }
             }
         }
     }
     Ok(())
+}
+
+#[allow(clippy::result_large_err)]
+fn handle_payload(
+    payload: ProcessorPayload,
+    input_path: PathBuf,
+    output_at: &Option<String>,
+    flatten: bool,
+) -> Vec<(PathBuf, Output)> {
+    let mut out_paths: Vec<(PathBuf, Output)> = vec![];
+    let process_path = |path: PathBuf, named_img: Option<&NamedIcon>| -> PathBuf {
+        debug!(path = ?path, img = ?named_img, "Processing path");
+        let processed_path = if let Some(named_img) = named_img {
+            named_img.build_path(path.as_path())
+        } else {
+            PathBuf::from(path.file_name().unwrap().to_str().unwrap().to_string())
+        };
+        debug!(path = ?processed_path, "Processed path");
+
+        let parent_path = path.parent().unwrap();
+
+        let mut path = PathBuf::new();
+
+        if let Some(output) = &output_at {
+            path = PathBuf::from(output).join(&path);
+        }
+
+        if !flatten {
+            path.push(parent_path);
+        }
+        path.push(processed_path);
+        info!(path = ?path, "Processed path");
+        path
+    };
+
+    match payload {
+        ProcessorPayload::Single(inner) => {
+            let mut processed_path = process_path(input_path.clone(), None);
+            processed_path.set_extension(inner.extension());
+            out_paths.push((processed_path, Output::Image(*inner)));
+        }
+        ProcessorPayload::SingleNamed(named) => {
+            let mut processed_path = process_path(input_path.clone(), Some(&named));
+            processed_path.set_extension(named.image.extension());
+            out_paths.push((processed_path, Output::Image(named.image)))
+        }
+        ProcessorPayload::MultipleNamed(icons) => {
+            for icon in icons {
+                let mut processed_path = process_path(input_path.clone(), Some(&icon));
+                processed_path.set_extension(icon.image.extension());
+                out_paths.push((processed_path, Output::Image(icon.image)))
+            }
+        }
+        ProcessorPayload::ConfigWrapped(payload, config_text) => {
+            // First, we'll pack in our config
+            let mut processed_path = process_path(input_path.clone(), None);
+            processed_path.set_extension(config_text.extension());
+            out_paths.push((processed_path, Output::Text(*config_text)));
+            // Then we recurse and handle the enclosed payload
+            let mut contained = handle_payload(*payload, input_path, output_at, flatten);
+            out_paths.append(&mut contained);
+        }
+    }
+    out_paths
 }

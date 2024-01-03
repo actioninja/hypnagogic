@@ -8,6 +8,7 @@ use cutters::bitmask_windows::BitmaskWindows;
 use dmi::error::DmiError;
 use dmi::icon::Icon;
 use enum_dispatch::enum_dispatch;
+use format_converter::bitmask_to_precut::BitmaskSliceReconstruct;
 use image::{DynamicImage, ImageError, ImageFormat};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -130,6 +131,23 @@ impl NamedIcon {
     }
 }
 
+/// Represents the possible actual outputs of an icon operation
+#[derive(Clone)]
+pub enum Output {
+    Image(OutputImage),
+    Text(OutputText),
+}
+
+impl Output {
+    #[must_use]
+    pub const fn extension(&self) -> &'static str {
+        match self {
+            Output::Image(image) => image.extension(),
+            Output::Text(text) => text.extension(),
+        }
+    }
+}
+
 /// Represents the possible actual output images of an icon operation
 #[derive(Clone)]
 pub enum OutputImage {
@@ -147,6 +165,23 @@ impl OutputImage {
     }
 }
 
+/// Represents the possible text outputs of an icon operation
+#[derive(Clone)]
+pub enum OutputText {
+    PngConfig(String),
+    DmiConfig(String),
+}
+
+impl OutputText {
+    #[must_use]
+    pub const fn extension(&self) -> &'static str {
+        match self {
+            OutputText::PngConfig(_) => "png.toml",
+            OutputText::DmiConfig(_) => "dmi.toml",
+        }
+    }
+}
+
 /// Represents the result of an icon operation
 /// It's entirely up to consumers to decide what to do with this
 #[derive(Clone)]
@@ -159,12 +194,29 @@ pub enum ProcessorPayload {
     SingleNamed(Box<NamedIcon>),
     /// Multiple named icons. See [NamedIcon] for more info.
     MultipleNamed(Vec<NamedIcon>),
+    /// Payload of some sort with a config to produce inline with it
+    ConfigWrapped(Box<ProcessorPayload>, Box<OutputText>),
 }
 
 impl ProcessorPayload {
     #[must_use]
     pub fn from_icon(icon: Icon) -> Self {
         Self::Single(Box::new(OutputImage::Dmi(icon)))
+    }
+
+    #[must_use]
+    pub fn from_image(image: DynamicImage) -> Self {
+        Self::Single(Box::new(OutputImage::Png(image)))
+    }
+
+    #[must_use]
+    pub fn wrap_png_config(payload: ProcessorPayload, text: String) -> Self {
+        Self::ConfigWrapped(Box::new(payload), Box::new(OutputText::PngConfig(text)))
+    }
+
+    #[must_use]
+    pub fn wrap_dmi_config(payload: ProcessorPayload, text: String) -> Self {
+        Self::ConfigWrapped(Box::new(payload), Box::new(OutputText::DmiConfig(text)))
     }
 }
 
@@ -229,4 +281,5 @@ pub enum IconOperation {
     BitmaskSlice,
     BitmaskDirectionalVis,
     BitmaskWindows,
+    BitmaskSliceReconstruct,
 }
