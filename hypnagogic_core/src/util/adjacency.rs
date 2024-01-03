@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::util::corners::{Corner, CornerType, Side};
 
 bitflags! {
+    #[allow(clippy::unsafe_derive_deserialize)]
     #[derive(Serialize, Deserialize)]
     pub struct Adjacency: u8 {
         const N = 0b0000_0001;

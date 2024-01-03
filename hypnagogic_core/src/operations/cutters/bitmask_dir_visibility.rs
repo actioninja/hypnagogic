@@ -1,5 +1,3 @@
-
-
 use dmi::icon::{Icon, IconState};
 use enum_iterator::all;
 use image::{imageops, DynamicImage, GenericImageView};
@@ -43,7 +41,9 @@ impl IconOperationConfig for BitmaskDirectionalVis {
         mode: OperationMode,
     ) -> ProcessorResult<ProcessorPayload> {
         let InputIcon::DynamicImage(img) = input else {
-            return Err(ProcessorError::FormatError("This operation only accepts raw images".to_string()));
+            return Err(ProcessorError::FormatError(
+                "This operation only accepts raw images".to_string(),
+            ));
         };
         let (corners, prefabs) = self.bitmask_slice_config.generate_corners(img)?;
 
