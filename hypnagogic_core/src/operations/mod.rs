@@ -5,10 +5,10 @@ use std::path::{Path, PathBuf};
 use cutters::bitmask_dir_visibility::BitmaskDirectionalVis;
 use cutters::bitmask_slice::BitmaskSlice;
 use cutters::bitmask_windows::BitmaskWindows;
-use format_converter::bitmask_to_precut::BitmaskSliceReconstruct;
 use dmi::error::DmiError;
 use dmi::icon::Icon;
 use enum_dispatch::enum_dispatch;
+use format_converter::bitmask_to_precut::BitmaskSliceReconstruct;
 use image::{DynamicImage, ImageError, ImageFormat};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -135,7 +135,7 @@ impl NamedIcon {
 #[derive(Clone)]
 pub enum Output {
     Image(OutputImage),
-    Text(OutputText)
+    Text(OutputText),
 }
 
 impl Output {
@@ -195,7 +195,7 @@ pub enum ProcessorPayload {
     /// Multiple named icons. See [NamedIcon] for more info.
     MultipleNamed(Vec<NamedIcon>),
     /// Payload of some sort with a config to produce inline with it
-    ConfigWrapped(Box<ProcessorPayload>, Box<OutputText>) 
+    ConfigWrapped(Box<ProcessorPayload>, Box<OutputText>),
 }
 
 impl ProcessorPayload {
@@ -203,14 +203,17 @@ impl ProcessorPayload {
     pub fn from_icon(icon: Icon) -> Self {
         Self::Single(Box::new(OutputImage::Dmi(icon)))
     }
+
     #[must_use]
     pub fn from_image(image: DynamicImage) -> Self {
         Self::Single(Box::new(OutputImage::Png(image)))
     }
+
     #[must_use]
     pub fn wrap_png_config(payload: ProcessorPayload, text: String) -> Self {
         Self::ConfigWrapped(Box::new(payload), Box::new(OutputText::PngConfig(text)))
     }
+
     #[must_use]
     pub fn wrap_dmi_config(payload: ProcessorPayload, text: String) -> Self {
         Self::ConfigWrapped(Box::new(payload), Box::new(OutputText::DmiConfig(text)))

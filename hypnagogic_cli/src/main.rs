@@ -21,7 +21,7 @@ use hypnagogic_core::operations::{
     Output,
     OutputImage,
     OutputText,
-    ProcessorPayload, 
+    ProcessorPayload,
 };
 use rayon::prelude::*;
 use tracing::{debug, info, Level};
@@ -270,19 +270,24 @@ fn process_icon(
 
         // TODO: figure out a better thing to do than just the unwrap
         match output {
-            Output::Image(icon) => match icon {
-                OutputImage::Png(png) => {
-                    png.save(&mut path).unwrap();
-                }
-                OutputImage::Dmi(dmi) => {
-                    dmi.save(&mut file).unwrap();
+            Output::Image(icon) => {
+                match icon {
+                    OutputImage::Png(png) => {
+                        png.save(&mut path).unwrap();
+                    }
+                    OutputImage::Dmi(dmi) => {
+                        dmi.save(&mut file).unwrap();
+                    }
                 }
             }
-            Output::Text(text) => match text {
-                OutputText::PngConfig(config) | OutputText::DmiConfig(config) => {
-                    fs::write(path, config).expect(
-                        "Failed to write config text, (This is a program error, not a config error! Please \
-                        report!)")
+            Output::Text(text) => {
+                match text {
+                    OutputText::PngConfig(config) | OutputText::DmiConfig(config) => {
+                        fs::write(path, config).expect(
+                            "Failed to write config text, (This is a program error, not a config \
+                             error! Please report!)",
+                        )
+                    }
                 }
             }
         }
@@ -291,7 +296,12 @@ fn process_icon(
 }
 
 #[allow(clippy::result_large_err)]
-fn handle_payload(payload: ProcessorPayload, input_path: PathBuf, output_at: &Option<String>, flatten: bool) -> Vec<(PathBuf, Output)> {
+fn handle_payload(
+    payload: ProcessorPayload,
+    input_path: PathBuf,
+    output_at: &Option<String>,
+    flatten: bool,
+) -> Vec<(PathBuf, Output)> {
     let mut out_paths: Vec<(PathBuf, Output)> = vec![];
     let process_path = |path: PathBuf, named_img: Option<&NamedIcon>| -> PathBuf {
         debug!(path = ?path, img = ?named_img, "Processing path");
