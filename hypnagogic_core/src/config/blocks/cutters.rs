@@ -110,7 +110,7 @@ pub struct StringMap(pub HashMap<String, String>);
 impl StringMap {
     #[must_use]
     pub fn get(&self, key: &str) -> Option<&String> {
-        self.0.get(key.clone())
+        self.0.get(key)
     }
 }
 
