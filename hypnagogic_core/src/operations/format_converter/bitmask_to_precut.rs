@@ -190,6 +190,8 @@ impl IconOperationConfig for BitmaskSliceReconstruct {
         config.push("[cut_pos]".to_string());
         config.push(format!("x = {}", icon.width / 2));
         config.push(format!("y = {}", icon.height / 2));
+        // Newline gang
+        config.push(String::new());
         Ok(ProcessorPayload::wrap_png_config(ProcessorPayload::from_image(output_image), config.join("\n")))
     }
 
