@@ -104,7 +104,7 @@ impl Default for Positions {
     }
 }
 
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug, Default)]
 pub struct StringMap(pub HashMap<String, String>);
 
 impl StringMap {
@@ -127,7 +127,7 @@ impl Serialize for StringMap {
     {
         let mut map = HashMap::new();
 
-        for (k, v) in self.0.iter() {
+        for (k, v) in &self.0 {
             map.insert(k.clone(), v.clone());
         }
 
@@ -147,12 +147,6 @@ impl<'de> Deserialize<'de> for StringMap {
             }
             StringMap(result)
         })
-    }
-}
-
-impl Default for StringMap {
-    fn default() -> Self {
-        StringMap(HashMap::new())
     }
 }
 
